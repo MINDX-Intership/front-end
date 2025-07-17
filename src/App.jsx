@@ -1,4 +1,6 @@
+// App.jsx
 import React, { useState } from 'react';
+import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
@@ -21,6 +23,7 @@ function App() {
 
   return (
     <div>
+      <Navbar setCurrentPage={setCurrentPage} />
       {renderCurrentPage()}
     </div>
   );
