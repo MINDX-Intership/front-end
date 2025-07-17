@@ -10,22 +10,20 @@ function Navbar({ setCurrentPage }) {
 
   return (
     <nav style={{'display':'flex'}}>
-      <a href="/" className="navbar-brand" onClick={(e) => handleNavLinkClick(e, '/profile')}>
-        Tên Trang Web
-      </a>
+
       <ul style={{'display':'flex'}}>
-        <li className="nav-item">
-          <a href="/profile" className="nav-link" onClick={(e) => handleNavLinkClick(e, '/profile')}>
+        <li>
+          <a href="/profile" style={{'margin':'20px'}} onClick={(e) => handleNavLinkClick(e, '/profile')}>
             Profile
           </a>
         </li>
-        <li className="nav-item">
-          <a href="/login" className="nav-link" onClick={(e) => handleNavLinkClick(e, '/login')}>
+        <li>
+          <a href="/login" style={{'margin':'20px'}} onClick={(e) => handleNavLinkClick(e, '/login')}>
             Đăng nhập
           </a>
         </li>
-        <li className="nav-item">
-          <a href="/register" className="nav-link" onClick={(e) => handleNavLinkClick(e, '/register')}>
+        <li>
+          <a href="/register" style={{'margin':'20px'}} onClick={(e) => handleNavLinkClick(e, '/register')}>
             Đăng ký
           </a>
         </li>
