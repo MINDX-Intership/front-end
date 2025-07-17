@@ -41,7 +41,7 @@ const MainContent = styled(Box)(({ theme }) => ({
 
 const CoverImage = styled(Box)({
   width: "100%", height: "200px", backgroundColor: "#ccc",
-  backgroundImage: "url('https://via.placeholder.com/1200x200?text=Cover+Image')",
+  backgroundImage: "url('https://www.shutterstock.com/blog/wp-content/uploads/sites/5/2020/02/Usign-Gradients-Featured-Image.jpg')",
   backgroundSize: "cover", backgroundPosition: "center",
   borderRadius: theme.shape.borderRadius,
 });
@@ -128,13 +128,13 @@ function SettingPage() {
     setIsEditing(false);
   };
 
-  // Helper function to render form fields to reduce repetition in JSX
+
   const renderField = (label, value, onChange, type = "text", multiline = false, rows = 1, adornment = null) => (
     <FormField
       label={label} value={value} onChange={(e) => onChange(e.target.value)}
       disabled={!isEditing} fullWidth variant="outlined" type={type}
       multiline={multiline} rows={rows} InputProps={adornment ? { startAdornment: adornment } : {}}
-      InputLabelProps={label === "Role" ? { shrink: true } : {}} // Apply shrink for Role label
+      InputLabelProps={label === "Role" ? { shrink: true } : {}}
     />
   );
 
@@ -146,9 +146,9 @@ function SettingPage() {
           <Box sx={{ flexGrow: 1, maxWidth: 1200, mx: "auto" }}>
             <CoverImage />
             <ProfileHeader>
-              <Avatar alt="User Profile" src="https://via.placeholder.com/120?text=Profile" sx={{ width: 120, height: 120 }} />
+              <Avatar alt="User Profile" src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1" sx={{ width: 120, height: 120 }} />
               <Box>
-                <ProfileName variant="h4">{firstName} {lastName}</ProfileName>
+                <ProfileName style={{'top':'100px'}} variant="h4">{firstName} {lastName}</ProfileName>
                 <UserBio variant="body1">{bio}</UserBio>
               </Box>
             </ProfileHeader>
