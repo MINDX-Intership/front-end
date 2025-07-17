@@ -11,7 +11,6 @@ import Files from './components/Files';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('/');
-
   const renderCurrentPage = () => {
     switch (currentPage) {
       case '/homepage':
