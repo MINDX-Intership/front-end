@@ -1,7 +1,7 @@
-import React, { useState } from 'react'; // Import useState for search input
+import React, { useState } from 'react'; 
 
 function Navbar({ currentPage, setCurrentPage }) {
-  const [searchTerm, setSearchTerm] = useState(''); // State for search input
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleNavLinkClick = (e, path) => {
     e.preventDefault();
@@ -10,24 +10,24 @@ function Navbar({ currentPage, setCurrentPage }) {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    // You can add search functionality here, e.g., call an API
+
     console.log("Searching for:", e.target.value);
   };
 
-  // Base style for navigation links
+
   const baseLinkStyle = {
-    color: '#333', // Dark text for white background
+    color: '#333',
     textDecoration: 'none',
     padding: '10px 15px',
     borderRadius: '4px',
     transition: 'background-color 0.3s ease, color 0.3s ease',
-    fontWeight: '500', // Medium font weight
+    fontWeight: '500',
   };
 
-  // Style for active navigation links
+
   const activeLinkStyle = {
-    backgroundColor: '#e0e0e0', // Light grey background for active
-    color: '#007bff', // Blue text for active
+    backgroundColor: '#e0e0e0', 
+    color: '#007bff', 
     fontWeight: 'bold',
   };
 
@@ -94,6 +94,20 @@ function Navbar({ currentPage, setCurrentPage }) {
             onClick={(e) => handleNavLinkClick(e, '/register')}
           >
             Đăng ký
+          </a>
+        </li>
+                <li>
+          <a
+            href="/profile"
+            style={{
+              ...baseLinkStyle,
+              ...(currentPage === '/profile' ? activeLinkStyle : {}),
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
+            onClick={(e) => handleNavLinkClick(e, '/profile')}
+          >
+            Reset Password
           </a>
         </li>
       </ul>
