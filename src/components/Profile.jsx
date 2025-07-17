@@ -99,7 +99,7 @@ function SettingPage() {
 
   const defaultUserData = {
     firstName: "Killan", lastName: "James", email: "killanjames@gmail.com",
-    country: "USA", city: "New York", phoneNumber: "+1 234 567 890",
+    country: "USA", city: "New York", phoneNumber: "+96 969696996",
     bio: "Hello world Hello world Hello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world",
     role: "Product Designer",
   };

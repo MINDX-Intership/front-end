@@ -101,11 +101,11 @@ function Navbar({ currentPage, setCurrentPage }) {
             href="/profile"
             style={{
               ...baseLinkStyle,
-              ...(currentPage === '/profile' ? activeLinkStyle : {}),
+              ...(currentPage === '/reset-password' ? activeLinkStyle : {}),
             }}
             onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
             onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/profile')}
+            onClick={(e) => handleNavLinkClick(e, '/reset-password')}
           >
             Reset Password
           </a>
