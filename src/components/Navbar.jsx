@@ -59,6 +59,20 @@ function Navbar({ currentPage, setCurrentPage }) {
             href="/profile"
             style={{
               ...baseLinkStyle,
+              ...(currentPage === '/homepage' ? activeLinkStyle : {}),
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
+            onClick={(e) => handleNavLinkClick(e, '/homepage')}
+          >
+            Trang chủ
+          </a>
+        </li>
+        <li>
+          <a
+            href="/homepage"
+            style={{
+              ...baseLinkStyle,
               ...(currentPage === '/profile' ? activeLinkStyle : {}),
             }}
             onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}

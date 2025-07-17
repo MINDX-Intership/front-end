@@ -5,12 +5,16 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import ResetPassword from './components/ResetPassword';
+import Homepage from './components/Homepage';
+
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('/profile');
+  const [currentPage, setCurrentPage] = useState('/');
 
   const renderCurrentPage = () => {
     switch (currentPage) {
+      case '/homepage':
+        return <Homepage setCurrentPage={setCurrentPage} />;
       case '/login':
         return <Login setCurrentPage={setCurrentPage} />;
       case '/register':
@@ -18,7 +22,7 @@ function App() {
       case '/profile':
         return <Profile setCurrentPage={setCurrentPage} />;
       case '/reset-password':
-        return <ResetPassword setCurrentPage={setCurrentPage} />;
+        return <Homepage setCurrentPage={setCurrentPage} />;
       default:
         return <Login setCurrentPage={setCurrentPage} />;
     }
