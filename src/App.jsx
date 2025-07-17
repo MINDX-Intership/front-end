@@ -6,6 +6,7 @@ import Register from './components/Register';
 import Profile from './components/Profile';
 import ResetPassword from './components/ResetPassword';
 import Homepage from './components/Homepage';
+import Files from './components/Files';
 
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
       case '/profile':
         return <Profile setCurrentPage={setCurrentPage} />;
       case '/reset-password':
-        return <Homepage setCurrentPage={setCurrentPage} />;
+        return <Files setCurrentPage={setCurrentPage} />;
       default:
         return <Login setCurrentPage={setCurrentPage} />;
     }
