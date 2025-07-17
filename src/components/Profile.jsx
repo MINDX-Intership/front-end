@@ -1,7 +1,16 @@
 import { useState } from "react";
 import {
-  Typography, Box, Avatar, Button, TextField, Grid,
-  styled, Paper, createTheme, ThemeProvider, CssBaseline,
+  Typography,
+  Box,
+  Avatar,
+  Button,
+  TextField,
+  Grid,
+  styled,
+  Paper,
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
@@ -22,54 +31,96 @@ const theme = createTheme({
   spacing: 8,
   shape: { borderRadius: 8 },
   components: {
-    MuiButton: { styleOverrides: { root: { borderRadius: 20 }, outlined: { borderColor: "#e0e0e0", "&:hover": { backgroundColor: "rgba(74, 144, 226, 0.04)" } } } },
-    MuiTextField: { styleOverrides: { root: { "& .MuiOutlinedInput-root.Mui-disabled": { backgroundColor: "#f5f5f5" } } } },
-    MuiAvatar: { styleOverrides: { root: { border: "4px solid #ffffff", boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)" } } },
+    MuiButton: {
+      styleOverrides: {
+        root: { borderRadius: 20 },
+        outlined: {
+          borderColor: "#e0e0e0",
+          "&:hover": { backgroundColor: "rgba(74, 144, 226, 0.04)" },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root.Mui-disabled": {
+            backgroundColor: "#f5f5f5",
+          },
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          border: "4px solid #ffffff",
+          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+        },
+      },
+    },
   },
 });
 
 const Root = styled(Box)(({ theme }) => ({
-  minHeight: "100vh", backgroundColor: theme.palette.background.default,
-  color: theme.palette.text.primary, display: "flex",
+  minHeight: "100vh",
+  backgroundColor: theme.palette.background.default,
+  color: theme.palette.text.primary,
+  display: "flex",
 }));
 
 const MainContent = styled(Box)(({ theme }) => ({
-  flexGrow: 1, padding: theme.spacing(4),
+  flexGrow: 1,
+  padding: theme.spacing(4),
   [theme.breakpoints.down("sm")]: { padding: theme.spacing(2) },
   marginTop: "0px",
 }));
 
 const CoverImage = styled(Box)({
-  width: "100%", height: "200px", backgroundColor: "#ccc",
-  backgroundImage: "url('https://www.shutterstock.com/blog/wp-content/uploads/sites/5/2020/02/Usign-Gradients-Featured-Image.jpg')",
-  backgroundSize: "cover", backgroundPosition: "center",
+  width: "100%",
+  height: "200px",
+  backgroundColor: "#ccc",
+  backgroundImage:
+    "url('https://www.shutterstock.com/blog/wp-content/uploads/sites/5/2020/02/Usign-Gradients-Featured-Image.jpg')",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
   borderRadius: theme.shape.borderRadius,
 });
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  display: "flex", alignItems: "flex-end", gap: theme.spacing(2),
-  padding: theme.spacing(3), marginTop: theme.spacing(-10),
-  position: "relative", zIndex: 1,
+  display: "flex",
+  alignItems: "flex-end",
+  gap: theme.spacing(2),
+  padding: theme.spacing(3),
+  marginTop: theme.spacing(-10),
+  position: "relative",
+  zIndex: 1,
 }));
 
 const ProfileName = styled(Typography)(({ theme }) => ({
-  fontWeight: 700, color: theme.palette.text.primary,
+  fontWeight: 700,
+  color: theme.palette.text.primary,
 }));
 
 const UserBio = styled(Typography)(({ theme }) => ({
-  color: theme.palette.text.secondary, maxWidth: "600px",
+  color: theme.palette.text.secondary,
+  maxWidth: "600px",
   marginTop: theme.spacing(1),
 }));
 
 const SettingTitle = styled(Typography)(({ theme }) => ({
-  ...theme.typography.h5, color: theme.palette.text.primary,
-  marginBottom: theme.spacing(3), marginTop: theme.spacing(4),
+  ...theme.typography.h5,
+  color: theme.palette.text.primary,
+  marginBottom: theme.spacing(3),
+  marginTop: theme.spacing(4),
 }));
 
 const FormContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4), display: "flex", flexDirection: "column",
-  gap: theme.spacing(3), backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1], borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(4),
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(3),
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.shadows[1],
+  borderRadius: theme.shape.borderRadius,
 }));
 
 const FormField = styled(TextField)(({ theme }) => ({
@@ -82,15 +133,23 @@ const FormField = styled(TextField)(({ theme }) => ({
 }));
 
 const FileUploadArea = styled(Box)(({ theme }) => ({
-  border: `2px dashed ${theme.palette.divider}`, borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(4), textAlign: "center",
-  backgroundColor: theme.palette.background.default, cursor: "pointer",
-  "&:hover": { borderColor: theme.palette.primary.main, backgroundColor: "rgba(74, 144, 226, 0.05)" },
+  border: `2px dashed ${theme.palette.divider}`,
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(4),
+  textAlign: "center",
+  backgroundColor: theme.palette.background.default,
+  cursor: "pointer",
+  "&:hover": {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: "rgba(74, 144, 226, 0.05)",
+  },
   transition: theme.transitions.create(["border-color", "background-color"]),
 }));
 
 const ActionButtons = styled(Box)(({ theme }) => ({
-  display: "flex", gap: theme.spacing(1.5), justifyContent: "flex-end",
+  display: "flex",
+  gap: theme.spacing(1.5),
+  justifyContent: "flex-end",
   marginTop: theme.spacing(4),
 }));
 
@@ -98,8 +157,12 @@ function SettingPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const defaultUserData = {
-    firstName: "Killan", lastName: "James", email: "killanjames@gmail.com",
-    country: "USA", city: "New York", phoneNumber: "+96 969696996",
+    firstName: "Killan",
+    lastName: "James",
+    email: "killanjames@gmail.com",
+    country: "USA",
+    city: "New York",
+    phoneNumber: "+96 969696996",
     bio: "Hello world Hello world Hello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world",
     role: "Product Designer",
   };
@@ -116,24 +179,51 @@ function SettingPage() {
   const handleEditToggle = () => setIsEditing(!isEditing);
 
   const handleSave = () => {
-    console.log("Saving data:", { firstName, lastName, email, country, city, phoneNumber, bio, role });
+    console.log("Saving data:", {
+      firstName,
+      lastName,
+      email,
+      country,
+      city,
+      phoneNumber,
+      bio,
+      role,
+    });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setFirstName(defaultUserData.firstName); setLastName(defaultUserData.lastName);
-    setEmail(defaultUserData.email); setCountry(defaultUserData.country);
-    setCity(defaultUserData.city); setPhoneNumber(defaultUserData.phoneNumber);
-    setBio(defaultUserData.bio); setRole(defaultUserData.role);
+    setFirstName(defaultUserData.firstName);
+    setLastName(defaultUserData.lastName);
+    setEmail(defaultUserData.email);
+    setCountry(defaultUserData.country);
+    setCity(defaultUserData.city);
+    setPhoneNumber(defaultUserData.phoneNumber);
+    setBio(defaultUserData.bio);
+    setRole(defaultUserData.role);
     setIsEditing(false);
   };
 
-
-  const renderField = (label, value, onChange, type = "text", multiline = false, rows = 1, adornment = null) => (
+  const renderField = (
+    label,
+    value,
+    onChange,
+    type = "text",
+    multiline = false,
+    rows = 1,
+    adornment = null
+  ) => (
     <FormField
-      label={label} value={value} onChange={(e) => onChange(e.target.value)}
-      disabled={!isEditing} fullWidth variant="outlined" type={type}
-      multiline={multiline} rows={rows} InputProps={adornment ? { startAdornment: adornment } : {}}
+      label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={!isEditing}
+      fullWidth
+      variant="outlined"
+      type={type}
+      multiline={multiline}
+      rows={rows}
+      InputProps={adornment ? { startAdornment: adornment } : {}}
       InputLabelProps={label === "Role" ? { shrink: true } : {}}
     />
   );
@@ -145,51 +235,113 @@ function SettingPage() {
         <MainContent>
           <Box sx={{ flexGrow: 1, maxWidth: 1200, mx: "auto" }}>
             <CoverImage />
-            <ProfileHeader>
-              <Avatar alt="User Profile" src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1" sx={{ width: 120, height: 120 }} />
+            <div style={{'display':'flex'}}>
+              <ProfileHeader>
+                <Avatar
+                  alt="User Profile"
+                  src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1"
+                  sx={{ width: 120, height: 120 }}
+                />
+              </ProfileHeader>
               <Box>
-                <ProfileName style={{'top':'100px'}} variant="h4">{firstName} {lastName}</ProfileName>
+                <ProfileName style={{}} variant="h4">
+                  {firstName} {lastName}
+                </ProfileName>
                 <UserBio variant="body1">{bio}</UserBio>
               </Box>
-            </ProfileHeader>
-
+            </div>
             <ActionButtons>
               {isEditing ? (
                 <>
-                  <Button variant="outlined" onClick={handleCancel}>Cancel</Button>
-                  <Button variant="contained" onClick={handleSave}>Save changes</Button>
+                  <Button variant="outlined" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button variant="contained" onClick={handleSave}>
+                    Save changes
+                  </Button>
                 </>
               ) : (
-                <Button variant="outlined" onClick={handleEditToggle}>Edit profile</Button>
+                <Button variant="outlined" onClick={handleEditToggle}>
+                  Edit profile
+                </Button>
               )}
             </ActionButtons>
 
             <SettingTitle variant="h5">My details</SettingTitle>
             <FormContainer>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>{renderField("First name", firstName, setFirstName)}</Grid>
-                <Grid item xs={12} sm={6}>{renderField("Last name", lastName, setLastName)}</Grid>
                 <Grid item xs={12} sm={6}>
-                  {renderField("Email", email, setEmail, "email", false, 1,
-                    <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                      <Typography component="span" sx={{ color: theme.palette.text.secondary }}>✉️</Typography>
+                  {renderField("First name", firstName, setFirstName)}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {renderField("Last name", lastName, setLastName)}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {renderField(
+                    "Email",
+                    email,
+                    setEmail,
+                    "email",
+                    false,
+                    1,
+                    <Box sx={{ mr: 1, display: "flex", alignItems: "center" }}>
+                      <Typography
+                        component="span"
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        ✉️
+                      </Typography>
                     </Box>
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>{renderField("Phone number", phoneNumber, setPhoneNumber, "tel")}</Grid>
-                <Grid item xs={12} sm={6}>{renderField("Country", country, setCountry)}</Grid>
-                <Grid item xs={12} sm={6}>{renderField("City", city, setCity)}</Grid>
-                <Grid item xs={12}>{renderField("Bio", bio, setBio, "text", true, 4)}</Grid>
-                <Grid item xs={12}>{renderField("Role", role, setRole)}</Grid>
+                <Grid item xs={12} sm={6}>
+                  {renderField(
+                    "Phone number",
+                    phoneNumber,
+                    setPhoneNumber,
+                    "tel"
+                  )}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {renderField("Country", country, setCountry)}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {renderField("City", city, setCity)}
+                </Grid>
+                <Grid item xs={12}>
+                  {renderField("Bio", bio, setBio, "text", true, 4)}
+                </Grid>
+                <Grid item xs={12}>
+                  {renderField("Role", role, setRole)}
+                </Grid>
               </Grid>
             </FormContainer>
 
             <SettingTitle variant="h5">Upload photo</SettingTitle>
             <FileUploadArea>
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <CloudUploadIcon sx={{ fontSize: 32, color: theme.palette.text.secondary }} />
-                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Click to upload or drag and drop</Typography>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>SVG, PNG, JPG or GIF (max. 800x400px)</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <CloudUploadIcon
+                  sx={{ fontSize: 32, color: theme.palette.text.secondary }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.palette.text.secondary }}
+                >
+                  Click to upload or drag and drop
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: theme.palette.text.secondary }}
+                >
+                  SVG, PNG, JPG or GIF (max. 800x400px)
+                </Typography>
               </Box>
             </FileUploadArea>
           </Box>
