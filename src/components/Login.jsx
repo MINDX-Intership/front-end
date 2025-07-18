@@ -5,11 +5,11 @@ import './Login.css';
 const Login = ({ setCurrentPage }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // State for error messages
+  const [error, setError] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
 
     try {
       const response = await fetch('http://localhost:3000/api/accounts/login', {
@@ -27,8 +27,7 @@ const Login = ({ setCurrentPage }) => {
 
       if (response.ok) {
         console.log('Login successful:', data);
-        // Optionally, store token or user data and redirect to homepage
-        setCurrentPage('/homepage'); // Redirect to homepage on successful login
+        setCurrentPage('/homepage');
       } else {
         console.error('Login failed:', data);
         setError(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
@@ -41,11 +40,22 @@ const Login = ({ setCurrentPage }) => {
 
   return (
     <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column',  alignItems: 'center',  bgcolor: '#f9f9f9', p: 3, borderRadius: 2, boxShadow: 1, }}>
+      <Box
+        sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          bgcolor: '#f9f9f9',
+          p: 4,
+          borderRadius: 2,
+          boxShadow: 1,
+        }}
+      >
         <Typography component="h1" variant="h5" color="primary">
           Đăng Nhập
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate  sx={{ mt: 2, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2, width: '100%' }}>
           <TextField margin="normal" required fullWidth id="email" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <TextField margin="normal" required fullWidth id="password" label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           {error && (
@@ -56,12 +66,28 @@ const Login = ({ setCurrentPage }) => {
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' },}}>
             Đăng Nhập
           </Button>
-          <Link href="/register"onClick={(e) => {
-            e.preventDefault();
-            setCurrentPage('/register');}}
-            sx={{ color: '#4a90e2', textDecoration: 'none', }}>
-            {"Chưa có tài khoản? Đăng ký"}
-          </Link>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 1 }}> {/* Sử dụng Box để căn chỉnh hai liên kết */}
+            <Link
+              href="/register"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage('/register');
+              }}
+              sx={{ color: '#4a90e2', textDecoration: 'none' }}
+            >
+              {"Chưa có tài khoản? Đăng ký"}
+            </Link>
+            <Link
+              href="/reset-password"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage('/reset-password');
+              }}
+              sx={{ color: '#4a90e2', textDecoration: 'none' }}
+            >
+              {"Quên mật khẩu?"}
+            </Link>
+          </Box>
         </Box>
       </Box>
     </Container>

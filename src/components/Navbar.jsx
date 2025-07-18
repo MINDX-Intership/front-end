@@ -96,7 +96,7 @@ function Navbar({ currentPage, setCurrentPage }) {
         {renderNavLink('/profile', 'Profile')}
         {renderNavLink('/login', 'Đăng nhập')}
         {renderNavLink('/register', 'Đăng ký')}
-        {renderNavLink('/reset-password', 'Reset Password')}
+        {renderNavLink('/work-load', 'Lịch làm việc')}
       </ul>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

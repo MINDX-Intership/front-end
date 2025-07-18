@@ -29,7 +29,7 @@ function Chat() {
       setNewMessage('');
 
       setTimeout(() => {
-        setMessages((prevMessages) => [...prevMessages, { text: `Xin chào! Bạn có thể hỏi tôi bất cứ điều gì.`, sender: 'bot' }]);
+        setMessages((prevMessages) => [...prevMessages, { text: `Hello wordl`, sender: 'nyc' }]);
       }, 1000);
     }
   };

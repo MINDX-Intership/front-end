@@ -25,6 +25,8 @@ function App() {
       case '/profile':
         return <Profile setCurrentPage={setCurrentPage} />;
       case '/reset-password':
+        return <ResetPassword setCurrentPage={setCurrentPage} />;
+      case '/work-load':
         return <WorkSchedule setCurrentPage={setCurrentPage} />;
       case '/notifications':
         return <Notifications setCurrentPage={setCurrentPage} />;
