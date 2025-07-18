@@ -7,6 +7,8 @@ import Profile from './components/Profile';
 import ResetPassword from './components/ResetPassword';
 import Homepage from './components/Homepage';
 import Files from './components/Files';
+import Notifications from './components/Notification';
+import Chat from './components/Chat';
 
 
 function App() {
@@ -22,15 +24,19 @@ function App() {
       case '/profile':
         return <Profile setCurrentPage={setCurrentPage} />;
       case '/reset-password':
-        return <Files setCurrentPage={setCurrentPage} />;
+        return <Notifications setCurrentPage={setCurrentPage} />;
+      case '/notifications':
+        return <Notifications setCurrentPage={setCurrentPage} />;
+      case '/chat':
+        return <Chat setCurrentPage={setCurrentPage} />;
       default:
         return <Login setCurrentPage={setCurrentPage} />;
     }
   };
-////
+
   return (
     <div>
-      <Navbar setCurrentPage={setCurrentPage} />
+      <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
       {renderCurrentPage()}
     </div>
   );

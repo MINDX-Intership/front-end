@@ -1,19 +1,42 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 
 function Navbar({ currentPage, setCurrentPage }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleNavLinkClick = (e, path) => {
     e.preventDefault();
     setCurrentPage(path);
+    setShowDropdown(false);
   };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-
     console.log("Searching for:", e.target.value);
   };
 
+  const handleAvatarClick = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleLogout = () => {
+    console.log("Logging out...");
+    setCurrentPage('/login');
+    setShowDropdown(false);
+  };
+
+  const handleNotificationClick = (e) => {
+    e.preventDefault();
+    setCurrentPage('/notifications');
+    setShowDropdown(false);
+  };
+
+
+  const handleChatClick = (e) => {
+    e.preventDefault();
+    setCurrentPage('/chat'); // Navigate to the chat page
+    setShowDropdown(false);
+  };
 
   const baseLinkStyle = {
     color: '#333',
@@ -24,28 +47,43 @@ function Navbar({ currentPage, setCurrentPage }) {
     fontWeight: '500',
   };
 
-
   const activeLinkStyle = {
-    backgroundColor: '#e0e0e0', 
-    color: '#007bff', 
+    backgroundColor: '#e0e0e0',
+    color: '#007bff',
     fontWeight: 'bold',
   };
+
+  const renderNavLink = (path, text) => (
+    <li>
+      <a
+        href={path}
+        style={{
+          ...baseLinkStyle,
+          ...(currentPage === path ? activeLinkStyle : {}),
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === path ? '#e0e0e0' : 'transparent')}
+        onClick={(e) => handleNavLinkClick(e, path)}
+      >
+        {text}
+      </a>
+    </li>
+  );
 
   return (
     <nav style={{
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'center',         
-      backgroundColor: 'white',     
-      padding: '15px 30px',          
-      boxShadow: '0 2px 10px rgba(0,0,0,0.08)', 
+      alignItems: 'center',
+      backgroundColor: 'white',
+      padding: '15px 30px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
       borderBottom: '1px solid #eee',
     }}>
 
       <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
         My App
       </div>
-
 
       <ul style={{
         display: 'flex',
@@ -54,78 +92,12 @@ function Navbar({ currentPage, setCurrentPage }) {
         padding: 0,
         gap: '30px',
       }}>
-        <li>
-          <a
-            href="/profile"
-            style={{
-              ...baseLinkStyle,
-              ...(currentPage === '/homepage' ? activeLinkStyle : {}),
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/homepage')}
-          >
-            Trang chủ
-          </a>
-        </li>
-        <li>
-          <a
-            href="/homepage"
-            style={{
-              ...baseLinkStyle,
-              ...(currentPage === '/profile' ? activeLinkStyle : {}),
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/profile')}
-          >
-            Profile
-          </a>
-        </li>
-        <li>
-          <a
-            href="/login"
-            style={{
-              ...baseLinkStyle,
-              ...(currentPage === '/login' ? activeLinkStyle : {}),
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/login' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/login')}
-          >
-            Đăng nhập
-          </a>
-        </li>
-        <li>
-          <a
-            href="/register"
-            style={{
-              ...baseLinkStyle,
-              ...(currentPage === '/register' ? activeLinkStyle : {}),
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/register' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/register')}
-          >
-            Đăng ký
-          </a>
-        </li>
-                <li>
-          <a
-            href="/profile"
-            style={{
-              ...baseLinkStyle,
-              ...(currentPage === '/reset-password' ? activeLinkStyle : {}),
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = (currentPage === '/profile' ? '#e0e0e0' : 'transparent')}
-            onClick={(e) => handleNavLinkClick(e, '/reset-password')}
-          >
-            Reset Password
-          </a>
-        </li>
+        {renderNavLink('/homepage', 'Trang chủ')}
+        {renderNavLink('/profile', 'Profile')}
+        {renderNavLink('/login', 'Đăng nhập')}
+        {renderNavLink('/register', 'Đăng ký')}
+        {renderNavLink('/reset-password', 'Reset Password')}
       </ul>
-
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {/* thanh search */}
@@ -147,7 +119,6 @@ function Navbar({ currentPage, setCurrentPage }) {
             onFocus={(e) => e.target.style.borderColor = '#007bff'}
             onBlur={(e) => e.target.style.borderColor = '#ccc'}
           />
-
           <span style={{
             position: 'absolute',
             left: '12px',
@@ -155,27 +126,117 @@ function Navbar({ currentPage, setCurrentPage }) {
             transform: 'translateY(-50%)',
             color: '#888',
           }}>
-            🔍 
+            🔍
           </span>
         </div>
 
+        {/* Notification Icon */}
+        <div
+          style={{
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#555',
+            position: 'relative',
+          }}
+          onClick={handleNotificationClick}
+        >
+          🔔
+          {/* Optional: Notification badge */}
+          <span style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            backgroundColor: 'red',
+            color: 'white',
+            borderRadius: '50%',
+            padding: '2px 6px',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            display: 'none',
+          }}>
+            3
+          </span>
+        </div>
 
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          backgroundColor: '#007bff', 
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: 'white',
-          fontWeight: 'bold',
-          fontSize: '18px',
-          cursor: 'pointer',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-        }}>
+        {/* Chat Icon */}
+        <div
+          style={{
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#555',
+            position: 'relative',
+          }}
+          onClick={handleChatClick} // Add onClick handler for chat
+        >
+          💬
+        </div>
 
-          Ki
+        {/* Avatar with Dropdown */}
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: '#007bff',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
+            onClick={handleAvatarClick}
+          >
+            Ki
+          </div>
+
+          {showDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '50px',
+              right: '0',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 100,
+              minWidth: '120px',
+              overflow: 'hidden',
+            }}>
+              <a
+                href="/profile"
+                style={{
+                  display: 'block',
+                  padding: '10px 15px',
+                  textDecoration: 'none',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                onClick={(e) => handleNavLinkClick(e, '/profile')}
+              >
+                Profile
+              </a>
+              <div
+                style={{
+                  display: 'block',
+                  padding: '10px 15px',
+                  cursor: 'pointer',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease',
+                  borderTop: '1px solid #eee',
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                onClick={handleLogout}
+              >
+                Logout
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>
