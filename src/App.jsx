@@ -9,6 +9,7 @@ import Homepage from './components/Homepage';
 import Files from './components/Files';
 import Notifications from './components/Notification';
 import Chat from './components/Chat';
+import WorkSchedule from './components/WorkSchedule';
 
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
       case '/profile':
         return <Profile setCurrentPage={setCurrentPage} />;
       case '/reset-password':
-        return <Notifications setCurrentPage={setCurrentPage} />;
+        return <WorkSchedule setCurrentPage={setCurrentPage} />;
       case '/notifications':
         return <Notifications setCurrentPage={setCurrentPage} />;
       case '/chat':

@@ -141,7 +141,7 @@ function Navbar({ currentPage, setCurrentPage }) {
           onClick={handleNotificationClick}
         >
           🔔
-          {/* Optional: Notification badge */}
+
           <span style={{
             position: 'absolute',
             top: '-5px',
@@ -166,12 +166,12 @@ function Navbar({ currentPage, setCurrentPage }) {
             color: '#555',
             position: 'relative',
           }}
-          onClick={handleChatClick} // Add onClick handler for chat
+          onClick={handleChatClick}
         >
           💬
         </div>
 
-        {/* Avatar with Dropdown */}
+        {/* Avatar*/}
         <div style={{ position: 'relative' }}>
           <div
             style={{
