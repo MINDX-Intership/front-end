@@ -46,24 +46,23 @@ const initialFormState = {
 };
 
 function PersonalTask() {
-  // Re-populating with sample data as requested
   const [selfCreatedTasks, setSelfCreatedTasks] = useState([
     {
       id: 'self-1', title: 'Viết bài blog mới', date: '2025-07-28', time: '14:00',
       description: 'Chủ đề về AI trong phát triển web.', completionPercentage: 50,
-      comments: [{ id: Date.now() - 4000, text: 'Nghiên cứu thêm về ứng dụng thực tế.', timestamp: '2025-07-20 09:00:00' }],
+      comments: [{ id: Date.now() - 4000, text: 'Hello worldHello worldHello worldHello world', timestamp: '2025-07-20 09:00:00' }],
       isAssigned: false, createdBy: CURRENT_USER_ID
     },
     {
-      id: 'self-2', title: 'Sắp xếp lại tài liệu', date: '2025-07-24', time: '11:00',
-      description: 'Tài liệu dự án X đã cũ cần được lưu trữ.', completionPercentage: 100,
+      id: 'self-2', title: 'Hello world3', date: '2025-07-24', time: '11:00',
+      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 100,
       comments: [], isAssigned: false, createdBy: CURRENT_USER_ID
     },
   ]);
   const [assignedTasks, setAssignedTasks] = useState([
     {
-      id: 'assigned-1', title: 'Hoàn thành báo cáo Q2', date: '2025-07-25', time: '17:00',
-      description: 'Báo cáo doanh thu và chi phí quý 2.', completionPercentage: 25,
+      id: 'assigned-1', title: 'Hello world2', date: '2025-07-25', time: '17:00',
+      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 25,
       comments: [
         { id: Date.now() - 3000, text: 'Cần số liệu từ phòng kinh doanh.', timestamp: '2025-07-20 10:00:00' },
         { id: Date.now() - 2500, text: 'Đã gửi yêu cầu lấy số liệu.', timestamp: '2025-07-20 14:00:00' },
@@ -71,13 +70,13 @@ function PersonalTask() {
       isAssigned: true, createdBy: ASSIGNER_USER_ID
     },
     {
-      id: 'assigned-2', title: 'Duyệt thiết kế UX', date: '2025-07-22', time: '10:00',
-      description: 'Xem xét và phản hồi về bản thiết kế giao diện người dùng mới.', completionPercentage: 75,
+      id: 'assigned-2', title: 'Hello world', date: '2025-07-22', time: '10:00',
+      description: 'Hello worldHello worldHello worldHello worldHello world', completionPercentage: 75,
       comments: [], isAssigned: true, createdBy: ASSIGNER_USER_ID
     },
     {
       id: 'assigned-3', title: 'Họp ban quản lý', date: '2025-07-23', time: '09:00',
-      description: 'Thảo luận kế hoạch chiến lược năm tới.', completionPercentage: 100,
+      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 100,
       comments: [
         { id: Date.now() - 1500, text: 'Đã hoàn thành chuẩn bị tài liệu.', timestamp: '2025-07-21 14:30:00' },
       ],

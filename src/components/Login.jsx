@@ -87,7 +87,7 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
               href="/reset-password"
               onClick={(e) => {
                 e.preventDefault();
-                setCurrentPage('/reset-password');
+                setCurrentPage('/forgot-password');
               }}
               sx={{ color: '#4a90e2', textDecoration: 'none' }}
             >

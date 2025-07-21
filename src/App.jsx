@@ -1,10 +1,10 @@
-// App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import ResetPassword from './components/ResetPassword';
+import ForgotPassword from './components/ForgotPassword';
 import Homepage from './components/Homepage';
 import Files from './components/Files';
 import Notifications from './components/Notification';
@@ -14,9 +14,8 @@ import VerifyEmailPage from './components/VerifyEmailPage';
 import CreateProfile from './components/CreateProfile';
 import PersonalTask from './components/PersonalTask';
 
-// Import ToastContainer and toast
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import the CSS!
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
@@ -25,7 +24,6 @@ function App() {
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // Handle browser popstate event
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPage(window.location.pathname);
@@ -36,14 +34,12 @@ function App() {
     };
   }, []);
 
-  // Page navigation
   const navigate = useCallback((path) => {
     console.log(`Navigating from ${currentPage} to ${path}`);
     window.history.pushState(null, '', path);
     setCurrentPage(path);
   }, [currentPage]);
 
-  // Fetch user profile information
   const fetchUserProfile = useCallback(async (token) => {
     if (!token || isFetchingProfile) {
       console.log("fetchUserProfile: No token or already fetching, returning null.");
@@ -52,8 +48,8 @@ function App() {
 
     setIsFetchingProfile(true);
     try {
-      console.log("fetchUserProfile: Attempting to fetch /api/users/me with token.");
-      const response = await fetch('http://localhost:3000/api/users/me', {
+      console.log("fetchUserProfile: Attempting to fetch /api/account/me with token.");
+      const response = await fetch('http://localhost:3000/api/account/me', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +65,7 @@ function App() {
           setCurrentUser(null);
           return { needsProfileCreation: true, error: false };
         } else {
-          console.log("fetchUserProfile: User profile found.");
+          console.log("fetchUserProfile: User profile found. Current user data:", data);
           setCurrentUser(data);
           return { needsProfileCreation: false, error: false };
         }
@@ -78,7 +74,6 @@ function App() {
         localStorage.removeItem('token');
         setAuthToken(null);
         setCurrentUser(null);
-        // Use toast for error
         toast.error(data.message || "Lỗi khi tải hồ sơ người dùng. Vui lòng đăng nhập lại.");
         return { needsProfileCreation: false, error: true };
       }
@@ -87,7 +82,6 @@ function App() {
       localStorage.removeItem('token');
       setAuthToken(null);
       setCurrentUser(null);
-      // Use toast for network error
       toast.error("Lỗi mạng hoặc lỗi không mong muốn khi tải hồ sơ. Vui lòng thử lại.");
       return { needsProfileCreation: false, error: true };
     } finally {
@@ -95,21 +89,27 @@ function App() {
     }
   }, [isFetchingProfile]);
 
-  // Effect để xử lý authToken và khởi tạo phiên người dùng
   useEffect(() => {
     const initializeUserSession = async () => {
       console.log("App.jsx useEffect: Initializing user session. Checking for AuthToken.");
+      // Define a set of public paths that don't require an authToken
+      const publicPaths = ['/login', '/register', '/forgot-password', '/verify-email', '/reset-password'];
+
+      // Check if the current page starts with any of the public paths
+      const isPublicPage = publicPaths.some(path => currentPage.startsWith(path));
+
       if (authToken) {
+        // User is authenticated
         const profileResult = await fetchUserProfile(authToken);
         if (profileResult && profileResult.needsProfileCreation) {
           console.log("App.jsx useEffect: Profile needs creation, navigating to /create-profile.");
           navigate('/create-profile');
         } else if (profileResult && !profileResult.error) {
           console.log("App.jsx useEffect: Profile fetched successfully.");
-          const authPages = ['/login', '/register', '/verify-email', '/reset-password', '/'];
-          if (authPages.some(path => currentPage.startsWith(path))) {
-            console.log("App.jsx useEffect: On auth page after profile fetch, navigating to /homepage.");
-            navigate('/homepage');
+          // If authenticated and on a public page (like login/register after login), redirect to homepage
+          if (isPublicPage || currentPage === '/') {
+            console.log("App.jsx useEffect: On auth/root page after profile fetch, navigating to /homepage.");
+
           }
         } else if (profileResult && profileResult.error) {
           console.error("App.jsx useEffect: Error fetching profile, logging out and redirecting to login.");
@@ -119,11 +119,13 @@ function App() {
           navigate('/login');
         }
       } else {
-        console.log("App.jsx useEffect: No authToken. Checking current page for public access.");
-        const publicPages = ['/login', '/register'];
-        if (!publicPages.some(path => currentPage.startsWith(path)) && !currentPage.startsWith('/verify-email') && !currentPage.startsWith('/reset-password')) {
+        // User is not authenticated
+        console.log("App.jsx useEffect: No authToken.");
+        if (!isPublicPage) { // If not authenticated and not on a public page, redirect to login
           console.log("App.jsx useEffect: On a protected page without token, navigating to /login.");
           navigate('/login');
+        } else {
+          console.log("App.jsx useEffect: On a public page, no redirection needed.");
         }
       }
       setInitialLoadComplete(true);
@@ -133,18 +135,16 @@ function App() {
     }
   }, [authToken, currentPage, navigate, fetchUserProfile, initialLoadComplete]);
 
-  // Handle successful login
+
   const handleLoginSuccess = useCallback(async (token, accountData) => {
     console.log("handleLoginSuccess: Token received, setting localStorage...");
     localStorage.setItem('token', token);
     setAuthToken(token);
-    // Directly attempt to fetch profile after login
-    const profileResult = await fetchUserProfile(token); // This will update currentUser and handle navigation
+    const profileResult = await fetchUserProfile(token);
     if (profileResult && !profileResult.error && !profileResult.needsProfileCreation) {
-      // toast.success("Đăng nhập thành công!"); // Consider if you want a toast here or rely on subsequent navigation
       navigate('/homepage');
     } else if (profileResult && profileResult.needsProfileCreation) {
-      toast.info("Vui lòng tạo hồ sơ của bạn."); // Inform user to create profile
+      toast.info("Vui lòng tạo hồ sơ của bạn.");
       navigate('/create-profile');
     } else {
       console.error("handleLoginSuccess: Failed to re-fetch profile after login or profile still missing. Redirecting to login.");
@@ -153,18 +153,17 @@ function App() {
     }
   }, [navigate, fetchUserProfile]);
 
-
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     setAuthToken(null);
     setCurrentUser(null);
-    toast.info("Bạn đã đăng xuất."); // Toast on logout
+    toast.info("Bạn đã đăng xuất.");
     navigate('/login');
   }, [navigate]);
 
   const handleProfileCreated = useCallback(async () => {
     console.log("onProfileCreated: Profile created successfully, re-fetching profile...");
-    toast.success("Hồ sơ đã được tạo thành công!"); // Toast on profile creation success
+    toast.success("Hồ sơ đã được tạo thành công!");
     if (authToken) {
       const profileResult = await fetchUserProfile(authToken);
       if (profileResult && !profileResult.error && !profileResult.needsProfileCreation) {
@@ -179,6 +178,7 @@ function App() {
 
   const renderCurrentPage = () => {
     const path = currentPage;
+    // The token for verify-email comes from query params, so keep this line
     const token = new URLSearchParams(window.location.search).get('token');
 
     switch (true) {
@@ -186,12 +186,16 @@ function App() {
         return <Login setCurrentPage={navigate} onLoginSuccess={handleLoginSuccess} />;
       case path === '/register':
         return <Register setCurrentPage={navigate} />;
+      case path === '/forgot-password':
+        return <ForgotPassword setCurrentPage={navigate} />;
+      case path.startsWith('/reset-password/'):
+        return <ResetPassword setCurrentPage={navigate} />;
       case path === '/verify-email':
         return (
           <VerifyEmailPage
             token={token}
             setCurrentPage={navigate}
-            onVerificationSuccess={handleLoginSuccess} // Use handleLoginSuccess to set token and fetch profile
+            onVerificationSuccess={handleLoginSuccess}
           />
         );
       case path === '/profile':
@@ -206,8 +210,6 @@ function App() {
             onProfileCreated={handleProfileCreated}
           />
         );
-      case path.startsWith('/reset-password/'):
-        return <ResetPassword setCurrentPage={navigate} token={token} />;
       case path === '/personal-work':
         if (!authToken) return navigate('/login');
         return <PersonalWork setCurrentPage={navigate} />;
@@ -221,6 +223,7 @@ function App() {
         if (!authToken) return navigate('/login');
         return <Chat setCurrentPage={navigate} />;
       default:
+        // If there's an auth token, show homepage, otherwise login
         return authToken ? <Homepage setCurrentPage={navigate} /> : <Login setCurrentPage={navigate} onLoginSuccess={handleLoginSuccess} />;
     }
   };

@@ -118,7 +118,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
         {renderNavLink('/homepage', 'Trang chủ')}
         {/* Only show profile link if logged in and has a profile */}
         {currentUser && currentUser.name && renderNavLink('/profile', 'Profile')}
-        {renderNavLink('/work-load', 'Lịch làm việc')}
+        {renderNavLink('/personal-task', 'Lịch làm việc')}
       </ul>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
