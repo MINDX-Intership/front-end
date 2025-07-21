@@ -9,10 +9,13 @@ const Register = ({ setCurrentPage }) => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [phone, setPhone] = useState('');
-  const [error, setError] = useState(''); 
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setSuccessMessage('');
 
     if (password !== confirmPassword) {
       setError('Mật khẩu và xác nhận mật khẩu không khớp.');
@@ -20,7 +23,8 @@ const Register = ({ setCurrentPage }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/accounts/register', {
+      // Step 1: Register the account
+      const registerResponse = await fetch('http://localhost:3000/api/accounts/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,20 +34,45 @@ const Register = ({ setCurrentPage }) => {
           password,
           confirmPassword,
           name,
-          age: parseInt(age), 
+          age: parseInt(age),
           phone,
         }),
       });
 
-      const data = await response.json();
+      const registerData = await registerResponse.json();
 
-      if (response.ok) {
-        console.log('Registration successful:', data);
-        // Optionally, redirect to login page or show a success message
-        setCurrentPage('/login');
+      if (registerResponse.ok) {
+        console.log('Registration successful:', registerData);
+        setSuccessMessage(registerData.message || 'Đăng ký thành công!');
+
+        // Step 2: If registration is successful, send verification email
+        if (registerData.account && registerData.account.email) {
+          try {
+            const verifyEmailResponse = await fetch('http://localhost:3000/api/accounts/send-verification', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: registerData.account.email }),
+            });
+
+            const verifyEmailData = await verifyEmailResponse.json();
+
+            if (verifyEmailResponse.ok) {
+              console.log('Verification email sent successfully:', verifyEmailData);
+              setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
+            } else {
+              console.error('Failed to send verification email:', verifyEmailData);
+              setError(verifyEmailData.message || 'Đăng ký thành công nhưng không gửi được email xác thực. Vui lòng thử lại sau.');
+            }
+          } catch (verifyEmailError) {
+            console.error('Network error or unexpected issue when sending verification email:', verifyEmailError);
+            setError('Đăng ký thành công nhưng gặp lỗi khi gửi email xác thực. Vui lòng thử lại sau.');
+          }
+        }
       } else {
-        console.error('Registration failed:', data);
-        setError(data.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+        console.error('Registration failed:', registerData);
+        setError(registerData.message || 'Đăng ký thất bại. Vui lòng thử lại.');
       }
     } catch (err) {
       console.error('Network error or unexpected issue:', err);
@@ -63,10 +92,15 @@ const Register = ({ setCurrentPage }) => {
           <TextField margin="normal" required fullWidth id="age" label="Tuổi" type="number" value={age} onChange={(e) => setAge(e.target.value)} />
           <TextField margin="normal" required fullWidth id="phone" label="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <TextField margin="normal" required fullWidth id="password" label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <TextField margin="normal" required fullWidth id="confirmPassword" label="Xác nhận mật khẩu" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /> {/* Confirm password field */}
+          <TextField margin="normal" required fullWidth id="confirmPassword" label="Xác nhận mật khẩu" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {error}
+            </Typography>
+          )}
+          {successMessage && (
+            <Typography color="success.main" variant="body2" sx={{ mt: 1 }}>
+              {successMessage}
             </Typography>
           )}
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' },}}>
@@ -74,7 +108,7 @@ const Register = ({ setCurrentPage }) => {
           </Button>
           <Link href="/login" onClick={(e) => {
             e.preventDefault();
-            setCurrentPage('/login');}} 
+            setCurrentPage('/login');}}
             sx={{ color: '#4a90e2', textDecoration: 'none',}}>
             {"Đã có tài khoản? Đăng nhập"}
           </Link>

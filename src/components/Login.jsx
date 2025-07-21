@@ -1,8 +1,9 @@
+// Login.jsx
 import React, { useState } from 'react';
 import { Button, TextField, Box, Typography, Container, Link } from '@mui/material';
 import './Login.css';
 
-const Login = ({ setCurrentPage }) => {
+const Login = ({ setCurrentPage, onLoginSuccess }) => { // Add onLoginSuccess prop
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,7 +28,8 @@ const Login = ({ setCurrentPage }) => {
 
       if (response.ok) {
         console.log('Login successful:', data);
-        setCurrentPage('/homepage');
+        // Call onLoginSuccess with the token and account data from the response
+        onLoginSuccess(data.token, data.account);
       } else {
         console.error('Login failed:', data);
         setError(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
@@ -66,7 +68,7 @@ const Login = ({ setCurrentPage }) => {
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' },}}>
             Đăng Nhập
           </Button>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 1 }}> {/* Sử dụng Box để căn chỉnh hai liên kết */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 1 }}>
             <Link
               href="/register"
               onClick={(e) => {

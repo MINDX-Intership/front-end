@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function Navbar({ currentPage, setCurrentPage }) {
+function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDropdown && !event.target.closest('.avatar-dropdown-container')) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleNavLinkClick = (e, path) => {
     e.preventDefault();
     setCurrentPage(path);
-    setShowDropdown(false);
+    setShowDropdown(false); // Close dropdown on navigation
   };
 
   const handleSearchChange = (e) => {
@@ -21,7 +34,7 @@ function Navbar({ currentPage, setCurrentPage }) {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    setCurrentPage('/login');
+    onLogout(); // Call the logout handler from App.jsx
     setShowDropdown(false);
   };
 
@@ -31,10 +44,9 @@ function Navbar({ currentPage, setCurrentPage }) {
     setShowDropdown(false);
   };
 
-
   const handleChatClick = (e) => {
     e.preventDefault();
-    setCurrentPage('/chat'); // Navigate to the chat page
+    setCurrentPage('/chat');
     setShowDropdown(false);
   };
 
@@ -70,6 +82,17 @@ function Navbar({ currentPage, setCurrentPage }) {
     </li>
   );
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return 'User';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
+
   return (
     <nav style={{
       display: 'flex',
@@ -93,9 +116,8 @@ function Navbar({ currentPage, setCurrentPage }) {
         gap: '30px',
       }}>
         {renderNavLink('/homepage', 'Trang chủ')}
-        {renderNavLink('/profile', 'Profile')}
-        {renderNavLink('/login', 'Đăng nhập')}
-        {renderNavLink('/register', 'Đăng ký')}
+        {/* Only show profile link if logged in and has a profile */}
+        {currentUser && currentUser.name && renderNavLink('/profile', 'Profile')}
         {renderNavLink('/work-load', 'Lịch làm việc')}
       </ul>
 
@@ -130,114 +152,130 @@ function Navbar({ currentPage, setCurrentPage }) {
           </span>
         </div>
 
-        {/* Notification Icon */}
-        <div
-          style={{
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: '#555',
-            position: 'relative',
-          }}
-          onClick={handleNotificationClick}
-        >
-          🔔
+        {/* Conditional rendering for authenticated vs unauthenticated state */}
+        {currentUser && currentUser.name ? ( // Check if currentUser exists AND has a name (profile created)
+          <>
+            {/* Notification Icon */}
+            <div
+              style={{
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#555',
+                position: 'relative',
+              }}
+              onClick={handleNotificationClick}
+            >
+              🔔
+              <span style={{
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                backgroundColor: 'red',
+                color: 'white',
+                borderRadius: '50%',
+                padding: '2px 6px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                display: 'none', // Set to 'block' if you have actual notification count
+              }}>
+                3
+              </span>
+            </div>
 
-          <span style={{
-            position: 'absolute',
-            top: '-5px',
-            right: '-5px',
-            backgroundColor: 'red',
-            color: 'white',
-            borderRadius: '50%',
-            padding: '2px 6px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            display: 'none',
-          }}>
-            3
-          </span>
-        </div>
+            {/* Chat Icon */}
+            <div
+              style={{
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#555',
+                position: 'relative',
+              }}
+              onClick={handleChatClick}
+            >
+              💬
+            </div>
 
-        {/* Chat Icon */}
-        <div
-          style={{
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: '#555',
-            position: 'relative',
-          }}
-          onClick={handleChatClick}
-        >
-          💬
-        </div>
-
-        {/* Avatar*/}
-        <div style={{ position: 'relative' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: '#007bff',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '18px',
-              cursor: 'pointer',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-            }}
-            onClick={handleAvatarClick}
-          >
-            Ki
-          </div>
-
-          {showDropdown && (
-            <div style={{
-              position: 'absolute',
-              top: '50px',
-              right: '0',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 100,
-              minWidth: '120px',
-              overflow: 'hidden',
-            }}>
-              <a
-                href="/profile"
-                style={{
-                  display: 'block',
-                  padding: '10px 15px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                onClick={(e) => handleNavLinkClick(e, '/profile')}
-              >
-                Profile
-              </a>
+            {/* Avatar with Dropdown for logged-in user */}
+            <div style={{ position: 'relative' }} className="avatar-dropdown-container">
               <div
                 style={{
-                  display: 'block',
-                  padding: '10px 15px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: '#007bff',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '18px',
                   cursor: 'pointer',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  borderTop: '1px solid #eee',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                onClick={handleLogout}
+                onClick={handleAvatarClick}
               >
-                Logout
+                {getInitials(currentUser.name)} {/* Use initials from name */}
               </div>
+
+              {showDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50px',
+                  right: '0',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 100,
+                  minWidth: '120px',
+                  overflow: 'hidden',
+                }}>
+                  <a
+                    href="/profile"
+                    style={{
+                      display: 'block',
+                      padding: '10px 15px',
+                      textDecoration: 'none',
+                      color: '#333',
+                      transition: 'background-color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    onClick={(e) => handleNavLinkClick(e, '/profile')}
+                  >
+                    Profile
+                  </a>
+                  <div
+                    style={{
+                      display: 'block',
+                      padding: '10px 15px',
+                      cursor: 'pointer',
+                      color: '#333',
+                      transition: 'background-color 0.2s ease',
+                      borderTop: '1px solid #eee',
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          // Login/Register links for unauthenticated user or user without profile
+          <ul style={{
+            display: 'flex',
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+            gap: '10px',
+          }}>
+            {renderNavLink('/login', 'Đăng nhập')}
+            {renderNavLink('/register', 'Đăng ký')}
+          </ul>
+        )}
       </div>
     </nav>
   );

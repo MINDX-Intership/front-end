@@ -1,17 +1,17 @@
-import { useState } from "react";
-
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Box,
   Avatar,
   Button,
   TextField,
-  Grid,
+  Grid, // Giữ Grid
   styled,
   Paper,
   createTheme,
   ThemeProvider,
   CssBaseline,
+  CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
@@ -25,8 +25,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: "Roboto, Arial, sans-serif",
-    h5: { fontWeight: 600, fontSize: "1.5rem"
-     },
+    h5: { fontWeight: 600, fontSize: "1.5rem" },
     body1: { lineHeight: 1.6 },
     button: { textTransform: "none" },
   },
@@ -155,54 +154,126 @@ const ActionButtons = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-function SettingPage() {
+function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const defaultUserData = {
-    firstName: "Killan",
-    lastName: "James",
-    email: "killanjames@gmail.com",
-    country: "USA",
-    city: "New York",
-    phoneNumber: "+96 969696996",
-    bio: "Hello world Hello world Hello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world",
-    role: "Product Designer",
+  const [personalEmail, setPersonalEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [dob, setDob] = useState('');
+  const [bio, setBio] = useState('');
+  const [role, setRole] = useState('');
+
+  const [originalData, setOriginalData] = useState({});
+
+  useEffect(() => {
+    // Nếu currentUser prop đã có sẵn, sử dụng nó để điền vào các trường
+    if (currentUser) {
+      console.log("Profile.jsx: Populating fields from currentUser prop.");
+      setPersonalEmail(currentUser.personalEmail || '');
+      setName(currentUser.name || '');
+      setPhoneNumber(currentUser.phoneNumber || '');
+      setDob(currentUser.dob ? currentUser.dob.split('T')[0] : '');
+      setBio(currentUser.bio || '');
+      setRole(currentUser.role || '');
+      setOriginalData({ ...currentUser });
+      setLoading(false); // Dữ liệu đã có, không cần loading
+      setError(null); // Xóa lỗi cũ
+    } else {
+      // Nếu currentUser là null, cần fetch dữ liệu hoặc chuyển hướng nếu không có token
+      const loadProfileData = async () => {
+        if (!authToken) {
+          console.log("Profile.jsx: No authToken, redirecting to login.");
+          setCurrentPage('/login');
+          return;
+        }
+        setLoading(true); // Bắt đầu loading chỉ khi dữ liệu chưa có
+        setError(null);
+        try {
+          const user = await onProfileUpdate(authToken); // Gọi fetchUserProfile từ App.jsx
+          if (user && !user.needsProfileCreation) { // Kiểm tra user hợp lệ và không cần tạo profile
+            console.log("Profile.jsx: Fetched user data successfully.");
+            setPersonalEmail(user.personalEmail || '');
+            setName(user.name || '');
+            setPhoneNumber(user.phoneNumber || '');
+            setDob(user.dob ? user.dob.split('T')[0] : '');
+            setBio(user.bio || '');
+            setRole(user.role || '');
+            setOriginalData({ ...user });
+          } else {
+            // Nếu user là null hoặc needsProfileCreation, nghĩa là profile không tồn tại
+            console.log("Profile.jsx: Profile not found or needs creation, redirecting to create-profile.");
+            setError('Không tìm thấy hồ sơ. Vui lòng tạo hồ sơ trước.');
+            setCurrentPage('/create-profile'); // Chuyển hướng đến trang tạo profile
+          }
+        } catch (err) {
+          console.error('Profile.jsx: Error loading profile:', err);
+          setError('Lỗi khi tải hồ sơ. Vui lòng thử lại.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // Chỉ load dữ liệu nếu currentUser chưa được set
+      if (!currentUser) {
+        loadProfileData();
+      }
+    }
+  }, [currentUser, authToken, setCurrentPage, onProfileUpdate]); // Phụ thuộc vào currentUser, authToken, setCurrentPage, onProfileUpdate
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing) {
+      setOriginalData({
+        personalEmail, name, phoneNumber, dob, bio, role
+      });
+    }
   };
 
-  const [firstName, setFirstName] = useState(defaultUserData.firstName);
-  const [lastName, setLastName] = useState(defaultUserData.lastName);
-  const [email, setEmail] = useState(defaultUserData.email);
-  const [country, setCountry] = useState(defaultUserData.country);
-  const [city, setCity] = useState(defaultUserData.city);
-  const [phoneNumber, setPhoneNumber] = useState(defaultUserData.phoneNumber);
-  const [bio, setBio] = useState(defaultUserData.bio);
-  const [role, setRole] = useState(defaultUserData.role);
-
-  const handleEditToggle = () => setIsEditing(!isEditing);
-
-  const handleSave = () => {
-    console.log("Saving data:", {
-      firstName,
-      lastName,
-      email,
-      country,
-      city,
+  const handleSave = async () => {
+    const updatedData = {
+      personalEmail,
+      name,
       phoneNumber,
+      dob,
       bio,
-      role,
-    });
-    setIsEditing(false);
+    };
+
+    try {
+      const response = await fetch('http://localhost:3000/api/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Profile updated successfully:', data);
+        setIsEditing(false);
+        await onProfileUpdate(authToken);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update profile:', errorData);
+        setError(errorData.message || 'Failed to update profile.');
+      }
+    } catch (err) {
+      console.error('Network error during profile update:', err);
+      setError('Network error. Please try again.');
+    }
   };
 
   const handleCancel = () => {
-    setFirstName(defaultUserData.firstName);
-    setLastName(defaultUserData.lastName);
-    setEmail(defaultUserData.email);
-    setCountry(defaultUserData.country);
-    setCity(defaultUserData.city);
-    setPhoneNumber(defaultUserData.phoneNumber);
-    setBio(defaultUserData.bio);
-    setRole(defaultUserData.role);
+    setPersonalEmail(originalData.personalEmail || '');
+    setName(originalData.name || '');
+    setPhoneNumber(originalData.phoneNumber || '');
+    setDob(originalData.dob ? originalData.dob.split('T')[0] : '');
+    setBio(originalData.bio || '');
+    setRole(originalData.role || '');
     setIsEditing(false);
   };
 
@@ -213,22 +284,67 @@ function SettingPage() {
     type = "text",
     multiline = false,
     rows = 1,
-    adornment = null
+    adornment = null,
+    disabled = false
   ) => (
     <FormField
       label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      disabled={!isEditing}
+      disabled={!isEditing || disabled}
       fullWidth
       variant="outlined"
       type={type}
       multiline={multiline}
       rows={rows}
       InputProps={adornment ? { startAdornment: adornment } : {}}
-      InputLabelProps={label === "Role" ? { shrink: true } : {}}
+      InputLabelProps={type === "date" || label === "Vai trò" ? { shrink: true } : {}}
     />
   );
+
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Root>
+          <MainContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress />
+            <Typography variant="h6" sx={{ ml: 2 }}>Đang tải hồ sơ...</Typography>
+          </MainContent>
+        </Root>
+      </ThemeProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Root>
+          <MainContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Typography variant="h6" color="error" sx={{ mt: 4 }}>Lỗi: {error}</Typography>
+            <Button variant="contained" onClick={() => setCurrentPage('/create-profile')} sx={{ mt: 2 }}>
+              Tạo hồ sơ ngay
+            </Button>
+          </MainContent>
+        </Root>
+      </ThemeProvider>
+    );
+  }
+
+  // If currentUser is null after loading, it means profile doesn't exist
+  if (!currentUser) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Root>
+          <MainContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Typography variant="h6" sx={{ mt: 4 }}>Hồ sơ chưa được tạo.</Typography>
+            <Button variant="contained" onClick={() => setCurrentPage('/create-profile')} sx={{ mt: 2 }}>
+              Tạo hồ sơ ngay
+            </Button>
+          </MainContent>
+        </Root>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -237,52 +353,54 @@ function SettingPage() {
         <MainContent>
           <Box sx={{ flexGrow: 1, maxWidth: 1200, mx: "auto" }}>
             <CoverImage />
-            <div style={{'display':'flex'}}>
+            <div style={{ 'display': 'flex' }}>
               <ProfileHeader>
                 <Avatar
                   alt="User Profile"
-                  src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1"
+                  src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1" // Placeholder or dynamic image
                   sx={{ width: 120, height: 120 }}
                 />
               </ProfileHeader>
               <Box>
                 <ProfileName style={{}} variant="h4">
-                  {firstName} {lastName}
+                  {currentUser.name || 'Người dùng mới'}
                 </ProfileName>
-                <UserBio variant="body1">{bio}</UserBio>
+                <UserBio variant="body1">{currentUser.bio || 'Chưa có tiểu sử.'}</UserBio>
               </Box>
             </div>
             <ActionButtons>
               {isEditing ? (
                 <>
                   <Button variant="outlined" onClick={handleCancel}>
-                    Cancel
+                    Hủy
                   </Button>
                   <Button variant="contained" onClick={handleSave}>
-                    Save changes
+                    Lưu thay đổi
                   </Button>
                 </>
               ) : (
                 <Button variant="outlined" onClick={handleEditToggle}>
-                  Edit profile
+                  Chỉnh sửa hồ sơ
                 </Button>
               )}
             </ActionButtons>
 
-            <SettingTitle variant="h5">My details</SettingTitle>
+            <SettingTitle variant="h5">Chi tiết của tôi</SettingTitle>
             <FormContainer>
+              {error && (
+                <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+              )}
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  {renderField("First name", firstName, setFirstName)}
+                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
+                  {renderField("Họ và Tên", name, setName)}
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField("Last name", lastName, setLastName)}
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
                   {renderField(
-                    "Email",
-                    email,
-                    setEmail,
+                    "Email Cá Nhân",
+                    personalEmail,
+                    setPersonalEmail,
                     "email",
                     false,
                     1,
@@ -293,33 +411,31 @@ function SettingPage() {
                       >
                         ✉️
                       </Typography>
-                    </Box>
+                    </Box>,
+                    false // Email cá nhân có thể chỉnh sửa
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
                   {renderField(
-                    "Phone number",
+                    "Số Điện Thoại",
                     phoneNumber,
                     setPhoneNumber,
                     "tel"
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField("Country", country, setCountry)}
+                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
+                  {renderField("Ngày Sinh", dob, setDob, "date")}
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField("City", city, setCity)}
+                <Grid xs={12}> {/* Cập nhật cú pháp Grid */}
+                  {renderField("Tiểu sử", bio, setBio, "text", true, 4)}
                 </Grid>
-                <Grid item xs={12}>
-                  {renderField("Bio", bio, setBio, "text", true, 4)}
-                </Grid>
-                <Grid item xs={12}>
-                  {renderField("Role", role, setRole)}
+                <Grid xs={12}> {/* Cập nhật cú pháp Grid */}
+                  {renderField("Vai trò", role, setRole, "text", false, 1, null, true)} {/* Vai trò không chỉnh sửa */}
                 </Grid>
               </Grid>
             </FormContainer>
 
-            <SettingTitle variant="h5">Upload photo</SettingTitle>
+            <SettingTitle variant="h5">Tải ảnh lên</SettingTitle>
             <FileUploadArea>
               <Box
                 sx={{
@@ -336,13 +452,13 @@ function SettingPage() {
                   variant="body2"
                   sx={{ color: theme.palette.text.secondary }}
                 >
-                  Click to upload or drag and drop
+                  Nhấp để tải lên hoặc kéo và thả
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: theme.palette.text.secondary }}
                 >
-                  SVG, PNG, JPG or GIF (max. 800x400px)
+                  SVG, PNG, JPG hoặc GIF (tối đa 800x400px)
                 </Typography>
               </Box>
             </FileUploadArea>
