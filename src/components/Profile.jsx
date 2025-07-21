@@ -1,3 +1,4 @@
+// Profile.jsx
 import React, { useState, useEffect } from "react";
 import {
   Typography,
@@ -5,7 +6,7 @@ import {
   Avatar,
   Button,
   TextField,
-  Grid, // Giữ Grid
+  Grid,
   styled,
   Paper,
   createTheme,
@@ -14,6 +15,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { toast } from 'react-toastify'; // Import toast
 
 const theme = createTheme({
   palette: {
@@ -157,7 +159,7 @@ const ActionButtons = styled(Box)(({ theme }) => ({
 function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [error, setError] = useState(null); // Remove error state
 
   const [personalEmail, setPersonalEmail] = useState('');
   const [name, setName] = useState('');
@@ -169,7 +171,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
   const [originalData, setOriginalData] = useState({});
 
   useEffect(() => {
-    // Nếu currentUser prop đã có sẵn, sử dụng nó để điền vào các trường
+    // If currentUser prop is already available, use it to populate fields
     if (currentUser) {
       console.log("Profile.jsx: Populating fields from currentUser prop.");
       setPersonalEmail(currentUser.personalEmail || '');
@@ -179,21 +181,21 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
       setBio(currentUser.bio || '');
       setRole(currentUser.role || '');
       setOriginalData({ ...currentUser });
-      setLoading(false); // Dữ liệu đã có, không cần loading
-      setError(null); // Xóa lỗi cũ
+      setLoading(false); // Data is available, no need for loading
+      // setError(null); // Clear previous errors
     } else {
-      // Nếu currentUser là null, cần fetch dữ liệu hoặc chuyển hướng nếu không có token
+      // If currentUser is null, need to fetch data or redirect if no token
       const loadProfileData = async () => {
         if (!authToken) {
           console.log("Profile.jsx: No authToken, redirecting to login.");
           setCurrentPage('/login');
           return;
         }
-        setLoading(true); // Bắt đầu loading chỉ khi dữ liệu chưa có
-        setError(null);
+        setLoading(true); // Start loading only if data is not yet available
+        // setError(null); // Clear previous errors
         try {
-          const user = await onProfileUpdate(authToken); // Gọi fetchUserProfile từ App.jsx
-          if (user && !user.needsProfileCreation) { // Kiểm tra user hợp lệ và không cần tạo profile
+          const user = await onProfileUpdate(authToken); // Call fetchUserProfile from App.jsx
+          if (user && !user.needsProfileCreation) { // Check for valid user and no profile creation needed
             console.log("Profile.jsx: Fetched user data successfully.");
             setPersonalEmail(user.personalEmail || '');
             setName(user.name || '');
@@ -202,45 +204,34 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
             setBio(user.bio || '');
             setRole(user.role || '');
             setOriginalData({ ...user });
-          } else {
-            // Nếu user là null hoặc needsProfileCreation, nghĩa là profile không tồn tại
+          } else { // If user is null or needsProfileCreation, it means profile does not exist
             console.log("Profile.jsx: Profile not found or needs creation, redirecting to create-profile.");
-            setError('Không tìm thấy hồ sơ. Vui lòng tạo hồ sơ trước.');
-            setCurrentPage('/create-profile'); // Chuyển hướng đến trang tạo profile
+            toast.error('Không tìm thấy hồ sơ. Vui lòng tạo hồ sơ trước.'); // Use toast.error
+            setCurrentPage('/create-profile'); // Redirect to create profile page
           }
         } catch (err) {
           console.error('Profile.jsx: Error loading profile:', err);
-          setError('Lỗi khi tải hồ sơ. Vui lòng thử lại.');
+          toast.error('Lỗi khi tải hồ sơ. Vui lòng thử lại.'); // Use toast.error
         } finally {
           setLoading(false);
         }
       };
-
-      // Chỉ load dữ liệu nếu currentUser chưa được set
+      // Only load data if currentUser is not yet set
       if (!currentUser) {
         loadProfileData();
       }
     }
-  }, [currentUser, authToken, setCurrentPage, onProfileUpdate]); // Phụ thuộc vào currentUser, authToken, setCurrentPage, onProfileUpdate
+  }, [currentUser, authToken, setCurrentPage, onProfileUpdate]); // Dependencies on currentUser, authToken, setCurrentPage, onProfileUpdate
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
-      setOriginalData({
-        personalEmail, name, phoneNumber, dob, bio, role
-      });
+      setOriginalData({ personalEmail, name, phoneNumber, dob, bio, role });
     }
   };
 
   const handleSave = async () => {
-    const updatedData = {
-      personalEmail,
-      name,
-      phoneNumber,
-      dob,
-      bio,
-    };
-
+    const updatedData = { personalEmail, name, phoneNumber, dob, bio, };
     try {
       const response = await fetch('http://localhost:3000/api/users/me', {
         method: 'PUT',
@@ -250,96 +241,58 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
         },
         body: JSON.stringify(updatedData),
       });
-
       if (response.ok) {
         const data = await response.json();
         console.log('Profile updated successfully:', data);
+        toast.success('Hồ sơ đã được cập nhật thành công!'); // Add success toast
         setIsEditing(false);
         await onProfileUpdate(authToken);
       } else {
         const errorData = await response.json();
         console.error('Failed to update profile:', errorData);
-        setError(errorData.message || 'Failed to update profile.');
+        toast.error(errorData.message || 'Cập nhật hồ sơ thất bại.'); // Use toast.error
       }
     } catch (err) {
-      console.error('Network error during profile update:', err);
-      setError('Network error. Please try again.');
+      console.error('Network error or unexpected issue when updating profile:', err);
+      toast.error('Đã xảy ra lỗi mạng khi cập nhật hồ sơ. Vui lòng thử lại.'); // Use toast.error
     }
   };
 
   const handleCancel = () => {
+    setIsEditing(false);
+    // Revert to original data
     setPersonalEmail(originalData.personalEmail || '');
     setName(originalData.name || '');
     setPhoneNumber(originalData.phoneNumber || '');
     setDob(originalData.dob ? originalData.dob.split('T')[0] : '');
     setBio(originalData.bio || '');
     setRole(originalData.role || '');
-    setIsEditing(false);
   };
 
-  const renderField = (
-    label,
-    value,
-    onChange,
-    type = "text",
-    multiline = false,
-    rows = 1,
-    adornment = null,
-    disabled = false
-  ) => (
+  const renderField = (label, value, setter, type = "text", editable = true, multilineRows = 1, helperText = null, disabled = false) => (
     <FormField
       label={label}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={!isEditing || disabled}
+      onChange={setter ? (e) => setter(e.target.value) : null}
       fullWidth
+      margin="normal"
       variant="outlined"
       type={type}
-      multiline={multiline}
-      rows={rows}
-      InputProps={adornment ? { startAdornment: adornment } : {}}
-      InputLabelProps={type === "date" || label === "Vai trò" ? { shrink: true } : {}}
+      multiline={multilineRows > 1}
+      rows={multilineRows}
+      disabled={!isEditing || disabled}
+      helperText={helperText}
     />
   );
 
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
+        <CssBaseline />
         <Root>
-          <MainContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <MainContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <CircularProgress />
             <Typography variant="h6" sx={{ ml: 2 }}>Đang tải hồ sơ...</Typography>
-          </MainContent>
-        </Root>
-      </ThemeProvider>
-    );
-  }
-
-  if (error) {
-    return (
-      <ThemeProvider theme={theme}>
-        <Root>
-          <MainContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Typography variant="h6" color="error" sx={{ mt: 4 }}>Lỗi: {error}</Typography>
-            <Button variant="contained" onClick={() => setCurrentPage('/create-profile')} sx={{ mt: 2 }}>
-              Tạo hồ sơ ngay
-            </Button>
-          </MainContent>
-        </Root>
-      </ThemeProvider>
-    );
-  }
-
-  // If currentUser is null after loading, it means profile doesn't exist
-  if (!currentUser) {
-    return (
-      <ThemeProvider theme={theme}>
-        <Root>
-          <MainContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Typography variant="h6" sx={{ mt: 4 }}>Hồ sơ chưa được tạo.</Typography>
-            <Button variant="contained" onClick={() => setCurrentPage('/create-profile')} sx={{ mt: 2 }}>
-              Tạo hồ sơ ngay
-            </Button>
           </MainContent>
         </Root>
       </ThemeProvider>
@@ -351,86 +304,60 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
       <CssBaseline />
       <Root>
         <MainContent>
-          <Box sx={{ flexGrow: 1, maxWidth: 1200, mx: "auto" }}>
+          <Box sx={{ maxWidth: "900px", mx: "auto", my: 4 }}>
             <CoverImage />
-            <div style={{ 'display': 'flex' }}>
-              <ProfileHeader>
-                <Avatar
-                  alt="User Profile"
-                  src="https://i0.wp.com/dappchap.com/wp-content/uploads/2018/04/toni-hukkanen-GeWnWHgGXls-unsplash.jpg?ssl=1" // Placeholder or dynamic image
-                  sx={{ width: 120, height: 120 }}
-                />
-              </ProfileHeader>
+            <ProfileHeader>
+              <Avatar
+                src={currentUser?.avatarUrl || "/static/images/avatar/1.jpg"} // Replace with actual avatar URL
+                sx={{ width: 120, height: 120 }}
+              />
               <Box>
-                <ProfileName style={{}} variant="h4">
-                  {currentUser.name || 'Người dùng mới'}
-                </ProfileName>
-                <UserBio variant="body1">{currentUser.bio || 'Chưa có tiểu sử.'}</UserBio>
+                <ProfileName variant="h4">{currentUser?.name || "Người dùng"}</ProfileName>
+                <UserBio variant="body1">
+                  {bio || "Chưa có tiểu sử."}
+                </UserBio>
               </Box>
-            </div>
+            </ProfileHeader>
+
             <ActionButtons>
               {isEditing ? (
                 <>
-                  <Button variant="outlined" onClick={handleCancel}>
-                    Hủy
-                  </Button>
-                  <Button variant="contained" onClick={handleSave}>
-                    Lưu thay đổi
-                  </Button>
+                  <Button variant="contained" onClick={handleSave} sx={{ bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}>Lưu</Button>
+                  <Button variant="outlined" onClick={handleCancel} sx={{ borderColor: '#e0e0e0', color: '#6c757d', '&:hover': { bgcolor: 'rgba(108, 117, 125, 0.04)' } }}>Hủy</Button>
                 </>
               ) : (
-                <Button variant="outlined" onClick={handleEditToggle}>
-                  Chỉnh sửa hồ sơ
-                </Button>
+                <Button variant="contained" onClick={handleEditToggle} sx={{ bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}>Chỉnh sửa hồ sơ</Button>
               )}
             </ActionButtons>
 
-            <SettingTitle variant="h5">Chi tiết của tôi</SettingTitle>
+            {/* Remove Typography error display here if it was used for state error
+            {error && (
+              <Typography color="error" variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+                {error}
+              </Typography>
+            )}
+            */}
+
+            <SettingTitle variant="h5">Thông tin cá nhân</SettingTitle>
             <FormContainer>
-              {error && (
-                <Typography color="error" variant="body2" sx={{ mb: 2 }}>
-                  {error}
-                </Typography>
-              )}
-              <Grid container spacing={3}>
-                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
-                  {renderField("Họ và Tên", name, setName)}
+              <Grid container spacing={3}> {/* Changed Grid container spacing */}
+                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                  {renderField("Email Cá Nhân", personalEmail, setPersonalEmail, "email")}
                 </Grid>
-                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
-                  {renderField(
-                    "Email Cá Nhân",
-                    personalEmail,
-                    setPersonalEmail,
-                    "email",
-                    false,
-                    1,
-                    <Box sx={{ mr: 1, display: "flex", alignItems: "center" }}>
-                      <Typography
-                        component="span"
-                        sx={{ color: theme.palette.text.secondary }}
-                      >
-                        ✉️
-                      </Typography>
-                    </Box>,
-                    false // Email cá nhân có thể chỉnh sửa
-                  )}
+                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                  {renderField("Tên", name, setName)}
                 </Grid>
-                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
-                  {renderField(
-                    "Số Điện Thoại",
-                    phoneNumber,
-                    setPhoneNumber,
-                    "tel"
-                  )}
+                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                  {renderField("Số Điện Thoại", phoneNumber, setPhoneNumber, "tel")}
                 </Grid>
-                <Grid xs={12} sm={6}> {/* Cập nhật cú pháp Grid */}
+                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
                   {renderField("Ngày Sinh", dob, setDob, "date")}
                 </Grid>
-                <Grid xs={12}> {/* Cập nhật cú pháp Grid */}
+                <Grid item xs={12}> {/* Changed Grid xs to Grid item xs */}
                   {renderField("Tiểu sử", bio, setBio, "text", true, 4)}
                 </Grid>
-                <Grid xs={12}> {/* Cập nhật cú pháp Grid */}
-                  {renderField("Vai trò", role, setRole, "text", false, 1, null, true)} {/* Vai trò không chỉnh sửa */}
+                <Grid item xs={12}> {/* Changed Grid xs to Grid item xs */}
+                  {renderField("Vai trò", role, setRole, "text", false, 1, null, true)} {/* Role is not editable */}
                 </Grid>
               </Grid>
             </FormContainer>

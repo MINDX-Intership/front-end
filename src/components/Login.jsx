@@ -2,18 +2,19 @@
 import React, { useState } from 'react';
 import { Button, TextField, Box, Typography, Container, Link } from '@mui/material';
 import './Login.css';
+import { toast } from 'react-toastify'; // Import toast
 
-const Login = ({ setCurrentPage, onLoginSuccess }) => { // Add onLoginSuccess prop
+const Login = ({ setCurrentPage, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // const [error, setError] = useState(''); // Remove error state
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    // setError(''); // Remove setError
 
     try {
-      const response = await fetch('http://localhost:3000/api/accounts/login', {
+      const response = await fetch('http://localhost:3000/api/account/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,15 +29,16 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => { // Add onLoginSuccess pr
 
       if (response.ok) {
         console.log('Login successful:', data);
-        // Call onLoginSuccess with the token and account data from the response
+        console.log('Token received for login success:', data.token);
         onLoginSuccess(data.token, data.account);
+        toast.success("Đăng nhập thành công!"); // Add success toast
       } else {
         console.error('Login failed:', data);
-        setError(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
+        toast.error(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.'); // Use toast.error
       }
     } catch (err) {
       console.error('Network error or unexpected issue:', err);
-      setError('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.'); // Use toast.error
     }
   };
 
@@ -60,11 +62,13 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => { // Add onLoginSuccess pr
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2, width: '100%' }}>
           <TextField margin="normal" required fullWidth id="email" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <TextField margin="normal" required fullWidth id="password" label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          {/* Remove Typography error display
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {error}
             </Typography>
           )}
+          */}
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' },}}>
             Đăng Nhập
           </Button>

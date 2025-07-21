@@ -1,6 +1,8 @@
+// CreateProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, Box, Typography, Container, CircularProgress } from '@mui/material';
 import { styled } from '@mui/system';
+import { toast } from 'react-toastify'; // Import toast
 
 const FormContainer = styled(Box)(({ }) => ({
   marginTop: '64px',
@@ -18,7 +20,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dob, setDob] = useState('');
-  const [error, setError] = useState('');
+  // const [error, setError] = useState(''); // Remove error state
   const [loading, setLoading] = useState(false);
 
 
@@ -30,16 +32,17 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    // setError(''); // Remove setError
     setLoading(true);
 
     if (!personalEmail || !name || !phoneNumber || !dob) {
-      setError('Vui lòng điền đầy đủ thông tin bắt buộc: Personal Email, Name, Phone Number, Date of Birth.');
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc: Email Cá Nhân, Tên, Số điện thoại, Ngày Sinh.'); // Use toast.error
       setLoading(false);
       return;
     }
 
     try {
+      console.log('CreateProfile: Using authToken in fetch header.');
       const response = await fetch('http://localhost:3000/api/users/create-profile', {
         method: 'POST',
         headers: {
@@ -59,14 +62,14 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
 
       if (response.ok) {
         console.log('Tạo hồ sơ thành công:', data);
-        onProfileCreated();
+        onProfileCreated(); // Call callback after successful profile creation
       } else {
         console.error('Tạo hồ sơ thất bại:', data);
-        setError(data.message || 'Tạo hồ sơ thất bại. Vui lòng thử lại.');
+        toast.error(data.message || 'Tạo hồ sơ thất bại. Vui lòng thử lại.'); // Use toast.error
       }
     } catch (err) {
       console.error('Lỗi mạng hoặc lỗi không mong muốn:', err);
-      setError('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.'); // Use toast.error
       setLoading(false);
     }
   };
@@ -101,7 +104,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             required
             fullWidth
             id="name"
-            label="Họ và Tên"
+            label="Tên"
             name="name"
             autoComplete="name"
             value={name}
@@ -154,11 +157,13 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             }}
           />
 
+          {/* Remove Typography error display
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {error}
             </Typography>
           )}
+          */}
 
           <Button
             type="submit"

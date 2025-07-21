@@ -1,22 +1,26 @@
+// VerifyEmailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Container } from '@mui/material';
+import { toast } from 'react-toastify'; // Import toast
 
 const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
-  const [status, setStatus] = useState('Verifying...');
-  const [message, setMessage] = useState('');
+  const [isVerifying, setIsVerifying] = useState(true); // Control CircularProgress
+  // const [status, setStatus] = useState('Verifying...'); // Removed, controlled by isVerifying
+  // const [message, setMessage] = useState(''); // Removed, messages handled by toast
 
   useEffect(() => {
     if (!token) {
-      setStatus('Error');
-      setMessage('Không tìm thấy token xác thực.');
+      // setStatus('Error'); // Replaced by toast
+      toast.error('Không tìm thấy token xác thực.');
       setTimeout(() => setCurrentPage('/login'), 3000);
       return;
     }
 
-    // Phần xác thực tài khoản và gọi callback
     const verifyAccountAndCreateProfile = async () => {
+      setIsVerifying(true); // Start verifying
       try {
-        const verificationResponse = await fetch(`http://localhost:3000/api/accounts/verify-email/${token}`, {
+        console.log('VerifyEmailPage: Using token in verification URL.');
+        const verificationResponse = await fetch(`http://localhost:3000/api/account/verify-email/${token}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -26,35 +30,32 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
         const verificationData = await verificationResponse.json();
 
         if (verificationResponse.ok) {
-          setStatus('Success');
-          setMessage(verificationData.message || 'Xác thực tài khoản thành công!');
+          // setStatus('Success'); // Replaced by toast
+          toast.success(verificationData.message || 'Xác thực tài khoản thành công!');
 
           const authToken = verificationData.token;
           if (authToken) {
+            console.log('VerifyEmailPage: Auth token received after verification.');
             onVerificationSuccess(authToken, verificationData.account);
           } else {
-            setMessage('Xác thực thành công nhưng không nhận được token đăng nhập. Vui lòng đăng nhập.');
+            toast.info('Xác thực thành công. Vui lòng đăng nhập.'); // Use toast.info
             setTimeout(() => setCurrentPage('/login'), 3000);
           }
         } else {
-          setStatus('Error');
-          setMessage(verificationData.message || 'Xác thực tài khoản thất bại. Token không hợp lệ hoặc đã hết hạn.');
+          // setStatus('Error'); // Replaced by toast
+          toast.error(verificationData.message || 'Xác thực tài khoản thất bại.');
           setTimeout(() => setCurrentPage('/login'), 3000);
         }
       } catch (error) {
-        setStatus('Error');
-        setMessage('Đã xảy ra lỗi khi xác thực. Vui lòng thử lại sau.');
+        console.error('Lỗi xác thực email:', error);
+        // setStatus('Error'); // Replaced by toast
+        toast.error('Đã xảy ra lỗi khi xác thực email. Vui lòng thử lại.');
         setTimeout(() => setCurrentPage('/login'), 3000);
+      } finally {
+        setIsVerifying(false); // Stop verifying
       }
     };
-
-    // Hiển thị trạng thái "Verifying..." trong 3 giây
-    const timer = setTimeout(() => {
-      verifyAccountAndCreateProfile();
-    }, 3000);
-
-    return () => clearTimeout(timer);
-
+    verifyAccountAndCreateProfile();
   }, [token, setCurrentPage, onVerificationSuccess]);
 
   return (
@@ -63,14 +64,15 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
         <Typography component="h1" variant="h5" color="primary" sx={{ mb: 2 }}>
           Xác thực Email
         </Typography>
-        {status === 'Verifying...' ? (
+        {isVerifying ? ( // Use isVerifying state for CircularProgress
           <CircularProgress sx={{ mb: 2 }} />
         ) : (
-          <Typography variant="body1" color={status === 'Success' ? 'success.main' : 'error'} sx={{ textAlign: 'center' }}>
-            {message}
+          // Remove direct Typography message display here, as toasts handle it
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
+            Quá trình xác thực đã hoàn tất.
           </Typography>
         )}
-        {status !== 'Verifying...' && status !== 'Success' && (
+        {!isVerifying && (
           <Typography variant="body2" sx={{ mt: 2 }}>
             Bạn có thể{' '}
             <span
@@ -86,7 +88,7 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
             >
               đăng ký
             </span>{' '}
-            tài khoản mới.
+            nếu cần.
           </Typography>
         )}
       </Box>
