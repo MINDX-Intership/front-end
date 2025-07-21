@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, TextField, Box, Typography, Container, CircularProgress } from '@mui/material';
 import { styled } from '@mui/system';
 
-
-
-
-const FormContainer = styled(Box)(({ }) => ({ 
+const FormContainer = styled(Box)(({ }) => ({
   marginTop: '64px',
   display: 'flex',
   flexDirection: 'column',
@@ -13,19 +10,19 @@ const FormContainer = styled(Box)(({ }) => ({
   backgroundColor: '#ffffff',
   padding: '32px',
   borderRadius: '8px',
-  boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)', // Tương đương theme.shadows[1]
+  boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
 }));
 
 const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   const [personalEmail, setPersonalEmail] = useState('');
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [dob, setDob] = useState(''); // Date of Birth
+  const [dob, setDob] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   useEffect(() => {
-    // Nếu không có token, chuyển hướng về trang đăng nhập
     if (!authToken) {
       setCurrentPage('/login');
     }
@@ -35,7 +32,6 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
     event.preventDefault();
     setError('');
     setLoading(true);
-
 
     if (!personalEmail || !name || !phoneNumber || !dob) {
       setError('Vui lòng điền đầy đủ thông tin bắt buộc: Personal Email, Name, Phone Number, Date of Birth.');
@@ -55,7 +51,6 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
           name,
           phoneNumber,
           dob,
-
         }),
       });
 
@@ -64,7 +59,6 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
 
       if (response.ok) {
         console.log('Tạo hồ sơ thành công:', data);
-
         onProfileCreated();
       } else {
         console.error('Tạo hồ sơ thất bại:', data);
@@ -78,10 +72,9 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   };
 
   return (
-
     <Container component="main" maxWidth="sm">
       <FormContainer>
-        <Typography component="h1" variant="h5" color="#4a90e2" sx={{ mb: 3, fontWeight: 600, fontSize: '1.5rem' }}> 
+        <Typography component="h1" variant="h5" color="#4a90e2" sx={{ mb: 3, fontWeight: 600, fontSize: '1.5rem' }}>
           Tạo Hồ Sơ Của Bạn
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
@@ -95,7 +88,6 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             autoComplete="email"
             value={personalEmail}
             onChange={(e) => setPersonalEmail(e.target.value)}
-
             sx={{
               '& .MuiOutlinedInput-root': {
                 '& fieldset': { borderColor: '#e0e0e0' },

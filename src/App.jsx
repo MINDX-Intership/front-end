@@ -8,10 +8,11 @@ import Homepage from './components/Homepage';
 import Files from './components/Files';
 import Notifications from './components/Notification';
 import Chat from './components/Chat';
-import WorkSchedule from './components/WorkSchedule';
+import PersonalWork from './components/PersonalWork';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import CreateProfile from './components/CreateProfile';
 import { Typography } from '@mui/material';
+import PersonalTask from './components/PersonalTask';
 
 function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
@@ -72,30 +73,30 @@ function App() {
     }
   }, [isFetchingProfile]);
 
-  // Quản lý phiên người dùng và điều hướng
-  useEffect(() => {
-    const initializeUserSession = async () => {
-      if (authToken) {
-        const profileResult = await fetchUserProfile(authToken);
-        if (profileResult && profileResult.needsProfileCreation) {
-          navigate('/create-profile');
-        } else if (profileResult && !profileResult.error) {
-          if (currentPage === '/login' || currentPage === '/register' || currentPage.startsWith('/verify-email') || currentPage.startsWith('/reset-password')) {
-            navigate('/homepage');
-          }
-        } else if (profileResult && profileResult.error) {
-          navigate('/login');
-        }
-      } else {
-        const publicPages = ['/login', '/register'];
-        if (!publicPages.some(path => currentPage.startsWith(path)) && !currentPage.startsWith('/verify-email') && !currentPage.startsWith('/reset-password')) {
-          navigate('/login');
-        }
-      }
-    };
+  //redirect login
+  // useEffect(() => {
+  //   const initializeUserSession = async () => {
+  //     if (authToken) {
+  //       const profileResult = await fetchUserProfile(authToken);
+  //       if (profileResult && profileResult.needsProfileCreation) {
+  //         navigate('/create-profile');
+  //       } else if (profileResult && !profileResult.error) {
+  //         if (currentPage === '/login' || currentPage === '/register' || currentPage.startsWith('/verify-email') || currentPage.startsWith('/reset-password')) {
+  //           navigate('/homepage');
+  //         }
+  //       } else if (profileResult && profileResult.error) {
+  //         navigate('/login');
+  //       }
+  //     } else {
+  //       const publicPages = ['/login', '/register'];
+  //       if (!publicPages.some(path => currentPage.startsWith(path)) && !currentPage.startsWith('/verify-email') && !currentPage.startsWith('/reset-password')) {
+  //         navigate('/login');
+  //       }
+  //     }
+  //   };
 
-    initializeUserSession();
-  }, [authToken, currentPage, fetchUserProfile]);
+  //   initializeUserSession();
+  // }, [authToken, currentPage, fetchUserProfile]);
 
   // Điều hướng trang
   const navigate = useCallback((path) => {
@@ -158,8 +159,10 @@ function App() {
         return <CreateProfile setCurrentPage={navigate} authToken={authToken} onProfileCreated={() => fetchUserProfile(authToken).then(() => navigate('/homepage'))} />;
       case path.startsWith('/reset-password/'):
         return <ResetPassword setCurrentPage={navigate} token={token} />;
-      case path === '/work-load':
-        return <WorkSchedule setCurrentPage={navigate} />;
+      case path === '/personal-work':
+        return <PersonalWork setCurrentPage={navigate} />;
+      case path === '/personal-task':
+        return <PersonalTask setCurrentPage={navigate} />;
       case path === '/notifications':
         return <Notifications setCurrentPage={navigate} />;
       case path === '/chat':

@@ -27,10 +27,10 @@ const initialFormState = {
   completed: false,
 };
 
-function WorkSchedule() {
+function PersonalWork() {
   const [schedule, setSchedule] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingEntry, setEditingEntry] = useState(null); // Stores the entry being edited, or null for new
+  const [editingEntry, setEditingEntry] = useState(null);
   const [formData, setFormData] = useState(initialFormState);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -38,7 +38,6 @@ function WorkSchedule() {
     severity: 'success',
   });
 
-  // Memoize snackbar functions as they are used across multiple handlers
   const showSnackbar = useCallback((message, severity) => {
     setSnackbar({ open: true, message, severity });
   }, []);
@@ -48,10 +47,8 @@ function WorkSchedule() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
-  // Centralized dialog open/close logic
   const openEditDialog = useCallback((entry = null) => {
     setEditingEntry(entry);
-    // Use the existing entry data or a new object with a unique ID for new entries
     setFormData(entry || { ...initialFormState, id: Date.now() });
     setOpenDialog(true);
   }, []);
@@ -62,7 +59,6 @@ function WorkSchedule() {
     setFormData(initialFormState);
   }, []);
 
-  // Single handler for all text field changes
   const handleInputChange = useCallback((e) => {
     const { name, value, checked, type } = e.target;
     setFormData((prevData) => ({
@@ -104,7 +100,6 @@ function WorkSchedule() {
     showSnackbar('Trạng thái hoàn thành đã được cập nhật!', 'info');
   }, [showSnackbar]);
 
-  // Completion percentage calculation is already efficient with useMemo
   const completionPercentage = useMemo(() => {
     if (schedule.length === 0) {
       return 0;
@@ -124,7 +119,6 @@ function WorkSchedule() {
         </Button>
       </Box>
 
-      {/* Thanh tiến độ*/}
       {schedule.length > 0 && (
         <Box sx={{ width: '100%', mb: 3 }}>
           <Typography variant="body1" sx={{ mb: 1 }}>
@@ -257,13 +251,13 @@ function WorkSchedule() {
             variant="outlined"
             value={formData.description}
             onChange={handleInputChange}
-            sx={{ mb: 2 }} // Added margin for consistency
+            sx={{ mb: 2 }}
           />
           <FormControlLabel
             control={
               <Checkbox
                 checked={formData.completed}
-                onChange={handleInputChange} // Use the single handler
+                onChange={handleInputChange}
                 name="completed"
                 color="primary"
               />
@@ -289,4 +283,4 @@ function WorkSchedule() {
   );
 }
 
-export default WorkSchedule;
+export default PersonalWork;

@@ -75,7 +75,7 @@ function Chat() {
             >
               <Paper
                 sx={{
-                  backgroundColor: msg.sender === 'user' ? 'success.light' : 'grey.300', // Sử dụng màu từ theme
+                  backgroundColor: msg.sender === 'user' ? 'success.light' : 'grey.300',
                   padding: '8px 12px',
                   borderRadius: '15px',
                   maxWidth: '70%',
