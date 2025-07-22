@@ -1,16 +1,13 @@
-// VerifyEmailPage.jsx
+
 import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Container } from '@mui/material';
 import { toast } from 'react-toastify'; // Import toast
 
 const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
   const [isVerifying, setIsVerifying] = useState(true); // Control CircularProgress
-  // const [status, setStatus] = useState('Verifying...'); // Removed, controlled by isVerifying
-  // const [message, setMessage] = useState(''); // Removed, messages handled by toast
 
   useEffect(() => {
     if (!token) {
-      // setStatus('Error'); // Replaced by toast
       toast.error('Không tìm thấy token xác thực.');
       setTimeout(() => setCurrentPage('/login'), 3000);
       return;
@@ -30,7 +27,6 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
         const verificationData = await verificationResponse.json();
 
         if (verificationResponse.ok) {
-          // setStatus('Success'); // Replaced by toast
           toast.success(verificationData.message || 'Xác thực tài khoản thành công!');
 
           const authToken = verificationData.token;
@@ -38,24 +34,30 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
             console.log('VerifyEmailPage: Auth token received after verification.');
             onVerificationSuccess(authToken, verificationData.account);
           } else {
-            toast.info('Xác thực thành công. Vui lòng đăng nhập.'); // Use toast.info
+            toast.info('Xác thực thành công. Vui lòng đăng nhập.');
             setTimeout(() => setCurrentPage('/login'), 3000);
           }
         } else {
-          // setStatus('Error'); // Replaced by toast
           toast.error(verificationData.message || 'Xác thực tài khoản thất bại.');
           setTimeout(() => setCurrentPage('/login'), 3000);
         }
       } catch (error) {
         console.error('Lỗi xác thực email:', error);
-        // setStatus('Error'); // Replaced by toast
         toast.error('Đã xảy ra lỗi khi xác thực email. Vui lòng thử lại.');
         setTimeout(() => setCurrentPage('/login'), 3000);
       } finally {
         setIsVerifying(false); // Stop verifying
       }
     };
-    verifyAccountAndCreateProfile();
+
+    // Thêm độ trễ 2 giây trước khi gọi verifyAccountAndCreateProfile
+    const timer = setTimeout(() => {
+      verifyAccountAndCreateProfile();
+    }, 2000); // 2000 milliseconds = 2 seconds
+
+    // Dọn dẹp timer khi component unmount hoặc khi dependencies thay đổi
+    return () => clearTimeout(timer);
+
   }, [token, setCurrentPage, onVerificationSuccess]);
 
   return (
@@ -64,10 +66,9 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
         <Typography component="h1" variant="h5" color="primary" sx={{ mb: 2 }}>
           Xác thực Email
         </Typography>
-        {isVerifying ? ( // Use isVerifying state for CircularProgress
+        {isVerifying ? (
           <CircularProgress sx={{ mb: 2 }} />
         ) : (
-          // Remove direct Typography message display here, as toasts handle it
           <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
             Quá trình xác thực đã hoàn tất.
           </Typography>

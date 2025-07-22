@@ -102,7 +102,7 @@ const Register = ({ setCurrentPage }) => {
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2, width: '100%' }}>
           <TextField margin="normal" required fullWidth id="email" label="Email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <TextField margin="normal" required fullWidth id="name" label="Họ và tên" value={name} onChange={(e) => setName(e.target.value)} />
-          <TextField margin="normal" required fullWidth id="age" label="Tuổi" type="number" value={age} onChange={(e) => setAge(e.target.value)} />
+          
           <TextField margin="normal" required fullWidth id="phone" label="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <TextField margin="normal" required fullWidth id="password" label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <TextField margin="normal" required fullWidth id="confirmPassword" label="Xác nhận mật khẩu" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
