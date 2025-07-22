@@ -7,11 +7,9 @@ import { toast } from 'react-toastify'; // Import toast
 const Login = ({ setCurrentPage, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const [error, setError] = useState(''); // Remove error state
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // setError(''); // Remove setError
 
     try {
       const response = await fetch('http://localhost:3000/api/account/login', {
@@ -30,15 +28,15 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
       if (response.ok) {
         console.log('Login successful:', data);
         console.log('Token received for login success:', data.token);
-        onLoginSuccess(data.token, data.account);
-        toast.success("Đăng nhập thành công!"); // Add success toast
+        // Changed: Only pass token, as App.jsx's fetchUserProfile will get full account data
+        onLoginSuccess(data.token);
       } else {
         console.error('Login failed:', data);
-        toast.error(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.'); // Use toast.error
+        toast.error(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');
       }
     } catch (err) {
       console.error('Network error or unexpected issue:', err);
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.'); // Use toast.error
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
     }
   };
 
@@ -62,13 +60,6 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2, width: '100%' }}>
           <TextField margin="normal" required fullWidth id="email" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <TextField margin="normal" required fullWidth id="password" label="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          {/* Remove Typography error display
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
-          )}
-          */}
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 1, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' },}}>
             Đăng Nhập
           </Button>

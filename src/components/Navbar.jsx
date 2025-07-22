@@ -1,9 +1,9 @@
+// Navbar.jsx
 import React, { useState, useEffect } from 'react';
 
 function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -119,6 +119,8 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
         {/* Only show profile link if logged in and has a profile */}
         {currentUser && currentUser.name && renderNavLink('/profile', 'Profile')}
         {renderNavLink('/personal-task', 'Lịch làm việc')}
+        {renderNavLink('/timeline', 'Timeline')}
+        {renderNavLink('/about', 'Về chúng tôi')}
       </ul>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -152,8 +154,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
           </span>
         </div>
 
-        {/* Conditional rendering for authenticated vs unauthenticated state */}
-        {currentUser && currentUser.name ? ( // Check if currentUser exists AND has a name (profile created)
+        {currentUser && currentUser.name ? (
           <>
             {/* Notification Icon */}
             <div
@@ -176,7 +177,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                 padding: '2px 6px',
                 fontSize: '10px',
                 fontWeight: 'bold',
-                display: 'none', // Set to 'block' if you have actual notification count
+                display: 'none',
               }}>
                 3
               </span>
@@ -214,7 +215,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                 }}
                 onClick={handleAvatarClick}
               >
-                {getInitials(currentUser.name)} {/* Use initials from name */}
+                {getInitials(currentUser.name)}
               </div>
 
               {showDropdown && (
@@ -264,7 +265,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
             </div>
           </>
         ) : (
-          // Login/Register links for unauthenticated user or user without profile
           <ul style={{
             display: 'flex',
             listStyle: 'none',

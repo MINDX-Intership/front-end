@@ -21,68 +21,96 @@ import {
   CardContent,
   InputAdornment,
   Checkbox,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Send as SendIcon,
+  CalendarMonth as CalendarMonthIcon, // Added Calendar icon
 } from '@mui/icons-material';
 
 // Simulate a current user ID for demonstration
 const CURRENT_USER_ID = 'user-123';
 const ASSIGNER_USER_ID = 'user-assigner-456'; // A different user ID for assigned tasks
 
-// Initial state for a new task form
+// Initial state for a new task form - Removed 'description'
 const initialFormState = {
   id: null,
   title: '',
   date: '',
   time: '',
-  description: '',
   completionPercentage: 0,
   isAssigned: false,
   createdBy: null,
 };
 
-function PersonalTask() {
-  const [selfCreatedTasks, setSelfCreatedTasks] = useState([
-    {
-      id: 'self-1', title: 'Viết bài blog mới', date: '2025-07-28', time: '14:00',
-      description: 'Chủ đề về AI trong phát triển web.', completionPercentage: 50,
-      comments: [{ id: Date.now() - 4000, text: 'Hello worldHello worldHello worldHello world', timestamp: '2025-07-20 09:00:00' }],
-      isAssigned: false, createdBy: CURRENT_USER_ID
-    },
-    {
-      id: 'self-2', title: 'Hello world3', date: '2025-07-24', time: '11:00',
-      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 100,
-      comments: [], isAssigned: false, createdBy: CURRENT_USER_ID
-    },
-  ]);
-  const [assignedTasks, setAssignedTasks] = useState([
-    {
-      id: 'assigned-1', title: 'Hello world2', date: '2025-07-25', time: '17:00',
-      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 25,
-      comments: [
-        { id: Date.now() - 3000, text: 'Cần số liệu từ phòng kinh doanh.', timestamp: '2025-07-20 10:00:00' },
-        { id: Date.now() - 2500, text: 'Đã gửi yêu cầu lấy số liệu.', timestamp: '2025-07-20 14:00:00' },
-      ],
-      isAssigned: true, createdBy: ASSIGNER_USER_ID
-    },
-    {
-      id: 'assigned-2', title: 'Hello world', date: '2025-07-22', time: '10:00',
-      description: 'Hello worldHello worldHello worldHello worldHello world', completionPercentage: 75,
-      comments: [], isAssigned: true, createdBy: ASSIGNER_USER_ID
-    },
-    {
-      id: 'assigned-3', title: 'Họp ban quản lý', date: '2025-07-23', time: '09:00',
-      description: 'Hello worldHello worldHello worldHello world', completionPercentage: 100,
-      comments: [
-        { id: Date.now() - 1500, text: 'Đã hoàn thành chuẩn bị tài liệu.', timestamp: '2025-07-21 14:30:00' },
-      ],
-      isAssigned: true, createdBy: ASSIGNER_USER_ID
-    },
-  ]);
+function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
+  const [selfCreatedTasks, setSelfCreatedTasks] = useState(() => {
+    try {
+      const storedTasks = localStorage.getItem('selfCreatedTasks');
+      return storedTasks ? JSON.parse(storedTasks) : [
+        {
+          id: 'self-1', title: 'Viết bài blog mới', date: '2025-07-28', time: '14:00',
+          completionPercentage: 50,
+          comments: [{ id: Date.now() - 4000, text: 'Hello worldHello worldHello worldHello world', timestamp: '2025-07-20 09:00:00' }],
+          isAssigned: false, createdBy: CURRENT_USER_ID
+        },
+        {
+          id: 'self-2', title: 'Hello world3', date: '2025-07-24', time: '11:00',
+          completionPercentage: 100,
+          comments: [], isAssigned: false, createdBy: CURRENT_USER_ID
+        },
+      ];
+    } catch (error) {
+      console.error("Failed to parse selfCreatedTasks from localStorage", error);
+      return [];
+    }
+  });
+
+  const [assignedTasks, setAssignedTasks] = useState(() => {
+    try {
+      const storedTasks = localStorage.getItem('assignedTasks');
+      return storedTasks ? JSON.parse(storedTasks) : [
+        {
+          id: 'assigned-1', title: 'Hello world2', date: '2025-07-25', time: '17:00',
+          completionPercentage: 25,
+          comments: [
+            { id: Date.now() - 3000, text: 'Cần số liệu từ phòng kinh doanh.', timestamp: '2025-07-20 10:00:00' },
+            { id: Date.now() - 2500, text: 'Đã gửi yêu cầu lấy số liệu.', timestamp: '2025-07-20 14:00:00' },
+          ],
+          isAssigned: true, createdBy: ASSIGNER_USER_ID
+        },
+        {
+          id: 'assigned-2', title: 'Hello world', date: '2025-07-22', time: '10:00',
+          completionPercentage: 75,
+          comments: [], isAssigned: true, createdBy: ASSIGNER_USER_ID
+        },
+        {
+          id: 'assigned-3', title: 'Họp ban quản lý', date: '2025-07-23', time: '09:00',
+          completionPercentage: 100,
+          comments: [
+            { id: Date.now() - 1500, text: 'Đã hoàn thành chuẩn bị tài liệu.', timestamp: '2025-07-21 14:30:00' },
+          ],
+          isAssigned: true, createdBy: ASSIGNER_USER_ID
+        },
+      ];
+    } catch (error) {
+      console.error("Failed to parse assignedTasks from localStorage", error);
+      return [];
+    }
+  });
+
+  // Persist tasks to localStorage whenever they change
+  React.useEffect(() => {
+    localStorage.setItem('selfCreatedTasks', JSON.stringify(selfCreatedTasks));
+  }, [selfCreatedTasks]);
+
+  React.useEffect(() => {
+    localStorage.setItem('assignedTasks', JSON.stringify(assignedTasks));
+  }, [assignedTasks]);
+
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -104,8 +132,6 @@ function PersonalTask() {
   }, []);
 
   const openTaskDialog = useCallback((task = null) => {
-    // Self-created tasks can only be edited by the creator.
-    // Assigned tasks can be opened for editing (to update progress/comments) by anyone.
     if (task && !task.isAssigned && task.createdBy !== CURRENT_USER_ID) {
       showSnackbar('Bạn không có quyền chỉnh sửa nhiệm vụ này.', 'error');
       return;
@@ -233,16 +259,31 @@ function PersonalTask() {
     showSnackbar('Bình luận đã được thêm!', 'success');
   }, [taskCommentInput, showSnackbar]);
 
+  const handleViewTimeline = useCallback(() => {
+    setCurrentPage('/timeline');
+  }, [setCurrentPage]);
+
 
   return (
-    <Box sx={{ p: 1.5, maxWidth: 700, margin: 'auto', mt: 2, bgcolor: '#f9f9f9', borderRadius: 1, boxShadow: 1 }}>
+    <Box sx={{ p: 1.5, maxWidth: 1000, margin: 'auto', mt: 2, bgcolor: '#f9f9f9', borderRadius: 1, boxShadow: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
         <Typography variant="h6" color="primary" sx={{ textAlign: 'left', fontWeight: 'bold' }}>
           Quản lý Nhiệm vụ của Tôi
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => openTaskDialog(null)} size="small">
-          Tạo Nhiệm vụ Mới
-        </Button>
+        <Box>
+          <Button
+            variant="outlined"
+            startIcon={<CalendarMonthIcon fontSize="small" />}
+            onClick={handleViewTimeline}
+            size="small"
+            sx={{ mr: 1 }}
+          >
+            Xem Timeline
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => openTaskDialog(null)} size="small">
+            Tạo Nhiệm vụ Mới
+          </Button>
+        </Box>
       </Box>
 
       {/* Overall Progress */}
@@ -253,8 +294,11 @@ function PersonalTask() {
         <LinearProgress variant="determinate" value={overallCompletion} sx={{ height: 6, borderRadius: 3, bgcolor: '#bbdefb' }} />
       </Box>
 
-      {/* Combined and Sorted Task List */}
+      {/* Original Combined and Sorted Task List */}
       <Box sx={{ mb: 2.5 }}>
+        <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+          Chi tiết nhiệm vụ
+        </Typography>
         {allSortedTasks.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 0.5, mb: 0.5 }}>
             Chưa có nhiệm vụ nào!
@@ -299,7 +343,6 @@ function PersonalTask() {
                           </Typography>
                         }
                       />
-                      {/* Using ml for consistent indentation */}
                       <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', ml: 3.5 }}>
                         Ngày: {task.date} lúc {task.time}
                       </Typography>
@@ -310,14 +353,11 @@ function PersonalTask() {
                       )}
                     </Box>
                     <Box sx={{ flexShrink: 0 }}>
-                      {/* Edit button: only for self-created tasks by current user OR any assigned task (for progress/comments only) */}
                       {(task.createdBy === CURRENT_USER_ID && !task.isAssigned) || task.isAssigned ? (
                         <IconButton color="primary" size="small" onClick={() => openTaskDialog(task)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       ) : null}
-
-                      {/* Delete button: only for self-created tasks AND if current user is the creator */}
                       {!task.isAssigned && task.createdBy === CURRENT_USER_ID && (
                         <IconButton color="error" size="small" onClick={() => handleDeleteTask(task.id, task.isAssigned, task.createdBy)}>
                           <DeleteIcon fontSize="small" />
@@ -325,23 +365,8 @@ function PersonalTask() {
                       )}
                     </Box>
                   </Box>
-                  {task.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.75rem', ml: 3.5 }}>
-                      Mô tả: {task.description}
-                    </Typography>
-                  )}
-
-                  {/* Individual Task Progress Bar */}
-                  {/* Using ml for consistent indentation and width: 'auto' for flexibility */}
-                  <Box sx={{ mt: 1, ml: 3.5, width: 'auto' }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.1 }}>
-                          Tiến độ: {task.completionPercentage}%
-                      </Typography>
-                      <LinearProgress variant="determinate" value={task.completionPercentage} sx={{ height: 5, borderRadius: 3 }} />
-                  </Box>
 
                   {/* Comment Section (Facebook-like) */}
-                  {/* Using ml for consistent indentation */}
                   <Box sx={{ mt: 2, borderTop: '1px solid #eee', pt: 1.5, ml: 3.5 }}>
                     <Typography variant="body2" color="text.primary" sx={{ mb: 0.5, fontWeight: 'bold' }}>
                       Bình luận ({task.comments ? task.comments.length : 0})
@@ -460,22 +485,6 @@ function PersonalTask() {
             value={formData.time}
             onChange={handleInputChange}
             required
-            sx={{ mb: 1.5 }}
-            disabled={editingTask?.isAssigned} // Disable for assigned tasks
-            size="small"
-          />
-          <TextField
-            margin="dense"
-            id="description"
-            name="description"
-            label="Mô tả"
-            type="text"
-            fullWidth
-            multiline
-            rows={2}
-            variant="outlined"
-            value={formData.description}
-            onChange={handleInputChange}
             sx={{ mb: 1.5 }}
             disabled={editingTask?.isAssigned} // Disable for assigned tasks
             size="small"

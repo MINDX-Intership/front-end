@@ -1,4 +1,3 @@
-// Profile.jsx
 import React, { useState, useEffect } from "react";
 import {
   Typography,
@@ -158,8 +157,7 @@ const ActionButtons = styled(Box)(({ theme }) => ({
 
 function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null); // Remove error state
+  const [loading, setLoading] = useState(true); // Start as true, will be set to false once currentUser is available or fetched
 
   const [personalEmail, setPersonalEmail] = useState('');
   const [name, setName] = useState('');
@@ -171,7 +169,6 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
   const [originalData, setOriginalData] = useState({});
 
   useEffect(() => {
-    // If currentUser prop is already available, use it to populate fields
     if (currentUser) {
       console.log("Profile.jsx: Populating fields from currentUser prop.");
       setPersonalEmail(currentUser.personalEmail || '');
@@ -181,80 +178,102 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
       setBio(currentUser.bio || '');
       setRole(currentUser.role || '');
       setOriginalData({ ...currentUser });
-      setLoading(false); // Data is available, no need for loading
-      // setError(null); // Clear previous errors
-    } else {
-      // If currentUser is null, need to fetch data or redirect if no token
+      setLoading(false); // Data is available from props, stop loading
+    } else if (authToken) {
+      // If currentUser is null but authToken is present,
+      // it means App.jsx might not have completed its initial fetch yet,
+      // or a direct navigation occurred before currentUser was set.
+      // Trigger a fetch through onProfileUpdate.
       const loadProfileData = async () => {
-        if (!authToken) {
-          console.log("Profile.jsx: No authToken, redirecting to login.");
-          setCurrentPage('/login');
-          return;
+        setLoading(true); // Show loading while fetching
+        console.log("Profile.jsx: currentUser is null but authToken exists, attempting to fetch via onProfileUpdate.");
+        const profileResult = await onProfileUpdate(authToken);
+        if (profileResult && profileResult.user) {
+            // If onProfileUpdate successfully fetched a user, fields will be populated by currentUser prop changing
+        } else if (profileResult && profileResult.needsProfileCreation) {
+            toast.error('Không tìm thấy hồ sơ. Vui lòng tạo hồ sơ trước.');
+            setCurrentPage('/create-profile');
+        } else if (profileResult && profileResult.error) {
+            toast.error('Lỗi khi tải hồ sơ. Vui lòng thử lại.');
+            setCurrentPage('/login');
+        } else {
+            // Unexpected case, navigate to login
+            setCurrentPage('/login');
         }
-        setLoading(true); // Start loading only if data is not yet available
-        // setError(null); // Clear previous errors
-        try {
-          const user = await onProfileUpdate(authToken); // Call fetchUserProfile from App.jsx
-          if (user && !user.needsProfileCreation) { // Check for valid user and no profile creation needed
-            console.log("Profile.jsx: Fetched user data successfully.");
-            setPersonalEmail(user.personalEmail || '');
-            setName(user.name || '');
-            setPhoneNumber(user.phoneNumber || '');
-            setDob(user.dob ? user.dob.split('T')[0] : '');
-            setBio(user.bio || '');
-            setRole(user.role || '');
-            setOriginalData({ ...user });
-          } else { // If user is null or needsProfileCreation, it means profile does not exist
-            console.log("Profile.jsx: Profile not found or needs creation, redirecting to create-profile.");
-            toast.error('Không tìm thấy hồ sơ. Vui lòng tạo hồ sơ trước.'); // Use toast.error
-            setCurrentPage('/create-profile'); // Redirect to create profile page
-          }
-        } catch (err) {
-          console.error('Profile.jsx: Error loading profile:', err);
-          toast.error('Lỗi khi tải hồ sơ. Vui lòng thử lại.'); // Use toast.error
-        } finally {
-          setLoading(false);
-        }
+        setLoading(false); // Hide loading after fetch attempt
       };
-      // Only load data if currentUser is not yet set
-      if (!currentUser) {
-        loadProfileData();
-      }
+      loadProfileData();
+    } else {
+        // No authToken, no currentUser, navigate to login if not already there
+        if (setCurrentPage && window.location.pathname !== '/login') { // Prevent infinite loop
+            console.log("Profile.jsx: No authToken, no currentUser, redirecting to login.");
+            setCurrentPage('/login');
+        }
+        setLoading(false); // No loading if no token
     }
-  }, [currentUser, authToken, setCurrentPage, onProfileUpdate]); // Dependencies on currentUser, authToken, setCurrentPage, onProfileUpdate
+  }, [currentUser, authToken, setCurrentPage, onProfileUpdate]);
+
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
+      // When entering edit mode, save the current displayed values as original
       setOriginalData({ personalEmail, name, phoneNumber, dob, bio, role });
     }
   };
 
   const handleSave = async () => {
-    const updatedData = { personalEmail, name, phoneNumber, dob, bio, };
+    // Tạo một đối tượng chỉ chứa các trường đã thay đổi
+    const changes = {};
+    if (personalEmail !== originalData.personalEmail) {
+      changes.personalEmail = personalEmail;
+    }
+    if (name !== originalData.name) {
+      changes.name = name;
+    }
+    if (phoneNumber !== originalData.phoneNumber) {
+      changes.phoneNumber = phoneNumber;
+    }
+    if (dob !== originalData.dob) {
+      changes.dob = dob;
+    }
+    if (bio !== originalData.bio) {
+      changes.bio = bio;
+    }
+    // Không cần gửi role vì nó là trường disable/không chỉnh sửa được
+
+    // Kiểm tra xem có thay đổi nào không trước khi gửi request
+    if (Object.keys(changes).length === 0) {
+      toast.info('Không có thay đổi nào để lưu.');
+      setIsEditing(false); // Thoát chế độ chỉnh sửa nếu không có thay đổi
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3000/api/users/me', {
+      const response = await fetch('http://localhost:3000/api/user/me', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(changes), // Gửi chỉ những trường đã thay đổi
       });
+
       if (response.ok) {
         const data = await response.json();
         console.log('Profile updated successfully:', data);
-        toast.success('Hồ sơ đã được cập nhật thành công!'); // Add success toast
+        toast.success('Hồ sơ đã được cập nhật thành công!');
         setIsEditing(false);
+        // Sau khi cập nhật thành công, gọi onProfileUpdate để App.jsx fetch lại profile mới nhất
         await onProfileUpdate(authToken);
       } else {
         const errorData = await response.json();
         console.error('Failed to update profile:', errorData);
-        toast.error(errorData.message || 'Cập nhật hồ sơ thất bại.'); // Use toast.error
+        toast.error(errorData.message || 'Cập nhật hồ sơ thất bại.');
       }
     } catch (err) {
       console.error('Network error or unexpected issue when updating profile:', err);
-      toast.error('Đã xảy ra lỗi mạng khi cập nhật hồ sơ. Vui lòng thử lại.'); // Use toast.error
+      toast.error('Đã xảy ra lỗi mạng khi cập nhật hồ sơ. Vui lòng thử lại.');
     }
   };
 
@@ -285,6 +304,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
     />
   );
 
+  // Show loading while data is being fetched or processed
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -299,6 +319,13 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
     );
   }
 
+  // If currentUser is null after loading attempt (e.g., token invalid, profile not found)
+  // and we are not in a loading state, we should not render the profile form.
+  // The useEffect or App.jsx's render logic should have redirected by now.
+  if (!currentUser) {
+      return null; // Or a message indicating no profile data
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -308,10 +335,10 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
             <CoverImage />
             <ProfileHeader>
               <Avatar
-                src={currentUser?.avatarUrl || "/static/images/avatar/1.jpg"} // Replace with actual avatar URL
-                sx={{ width: 120, height: 120 }}
+                src={currentUser?.avatarUrl || "/static/images/avatar/1.jpg"} // Use currentUser directly
+                sx={{ mt:2 ,width: 120, height: 120 }}
               />
-              <Box>
+              <Box sx={{my: 0 }}>
                 <ProfileName variant="h4">{currentUser?.name || "Người dùng"}</ProfileName>
                 <UserBio variant="body1">
                   {bio || "Chưa có tiểu sử."}
@@ -330,34 +357,26 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
               )}
             </ActionButtons>
 
-            {/* Remove Typography error display here if it was used for state error
-            {error && (
-              <Typography color="error" variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
-                {error}
-              </Typography>
-            )}
-            */}
-
             <SettingTitle variant="h5">Thông tin cá nhân</SettingTitle>
             <FormContainer>
-              <Grid container spacing={3}> {/* Changed Grid container spacing */}
-                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
                   {renderField("Email Cá Nhân", personalEmail, setPersonalEmail, "email")}
                 </Grid>
-                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                <Grid item xs={12} sm={6}>
                   {renderField("Tên", name, setName)}
                 </Grid>
-                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                <Grid item xs={12} sm={6}>
                   {renderField("Số Điện Thoại", phoneNumber, setPhoneNumber, "tel")}
                 </Grid>
-                <Grid item xs={12} sm={6}> {/* Changed Grid xs to Grid item xs and added sm */}
+                <Grid item xs={12} sm={6}>
                   {renderField("Ngày Sinh", dob, setDob, "date")}
                 </Grid>
-                <Grid item xs={12}> {/* Changed Grid xs to Grid item xs */}
+                <Grid item xs={12}>
                   {renderField("Tiểu sử", bio, setBio, "text", true, 4)}
                 </Grid>
-                <Grid item xs={12}> {/* Changed Grid xs to Grid item xs */}
-                  {renderField("Vai trò", role, setRole, "text", false, 1, null, true)} {/* Role is not editable */}
+                <Grid item xs={12}>
+                  {renderField("Vai trò", role, setRole, "text", false, 1, null, true)}
                 </Grid>
               </Grid>
             </FormContainer>

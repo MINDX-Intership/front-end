@@ -1,6 +1,17 @@
 // CreateProfile.jsx
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Typography, Container, CircularProgress } from '@mui/material';
+import {
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Container,
+  CircularProgress,
+  FormControl, // New import
+  InputLabel, // New import
+  Select, // New import
+  MenuItem, // New import
+} from '@mui/material';
 import { styled } from '@mui/system';
 import { toast } from 'react-toastify'; // Import toast
 
@@ -20,9 +31,9 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dob, setDob] = useState('');
-  // const [error, setError] = useState(''); // Remove error state
+  const [jobPosition, setJobPosition] = useState(''); // State for selected job position ID
+  const [availableJobPositions, setAvailableJobPositions] = useState([]); // State to store fetched job positions
   const [loading, setLoading] = useState(false);
-
 
   useEffect(() => {
     if (!authToken) {
@@ -30,13 +41,43 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
     }
   }, [authToken, setCurrentPage]);
 
+  // Effect to fetch job positions
+  useEffect(() => {
+    const fetchJobPositions = async () => {
+      try {
+        // Assuming there's an API endpoint to get job positions
+        const response = await fetch('http://localhost:3000/api/jobpositions', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`, // Include auth token if needed for this endpoint
+          },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setAvailableJobPositions(data.jobPositions); // Assuming data.jobPositions is an array of { _id, title }
+        } else {
+          console.error('Failed to fetch job positions:', data.message);
+          toast.error('Không thể tải danh sách chức vụ. Vui lòng thử lại.');
+        }
+      } catch (error) {
+        console.error('Error fetching job positions:', error);
+        toast.error('Lỗi kết nối khi tải danh sách chức vụ.');
+      }
+    };
+
+    if (authToken) { // Only fetch if authToken is available
+      fetchJobPositions();
+    }
+  }, [authToken]); // Dependency on authToken
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // setError(''); // Remove setError
     setLoading(true);
 
-    if (!personalEmail || !name || !phoneNumber || !dob) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc: Email Cá Nhân, Tên, Số điện thoại, Ngày Sinh.'); // Use toast.error
+    // Validate required fields including jobPosition
+    if (!personalEmail || !name || !phoneNumber || !dob || !jobPosition) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc: Email Cá Nhân, Tên, Số điện thoại, Ngày Sinh, và Chức vụ.');
       setLoading(false);
       return;
     }
@@ -54,6 +95,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
           name,
           phoneNumber,
           dob,
+          jobPosition: [jobPosition], // Send jobPosition as an array containing the selected ID
         }),
       });
 
@@ -62,14 +104,15 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
 
       if (response.ok) {
         console.log('Tạo hồ sơ thành công:', data);
-        onProfileCreated(); // Call callback after successful profile creation
+        toast.success('Tạo hồ sơ thành công!');
+        onProfileCreated();
       } else {
         console.error('Tạo hồ sơ thất bại:', data);
-        toast.error(data.message || 'Tạo hồ sơ thất bại. Vui lòng thử lại.'); // Use toast.error
+        toast.error(data.message || 'Tạo hồ sơ thất bại. Vui lòng thử lại.');
       }
     } catch (err) {
       console.error('Lỗi mạng hoặc lỗi không mong muốn:', err);
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.'); // Use toast.error
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
       setLoading(false);
     }
   };
@@ -156,14 +199,32 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
               },
             }}
           />
-
-          {/* Remove Typography error display
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
-          )}
-          */}
+          {/* Replaced TextField with Select for jobPosition */}
+          <FormControl fullWidth margin="normal" required sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#e0e0e0' },
+                '&:hover fieldset': { borderColor: '#4a90e2' },
+                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
+              },
+            }}>
+            <InputLabel id="job-position-label">Chức vụ</InputLabel>
+            <Select
+              labelId="job-position-label"
+              id="jobPosition"
+              value={jobPosition}
+              label="Chức vụ"
+              onChange={(e) => setJobPosition(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>Chọn chức vụ</em>
+              </MenuItem>
+              {availableJobPositions.map((position) => (
+                <MenuItem key={position._id} value={position._id}>
+                  {position.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Button
             type="submit"
