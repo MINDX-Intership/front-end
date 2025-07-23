@@ -87,6 +87,47 @@ const CoverImage = styled(Box)({
   borderRadius: theme.shape.borderRadius,
 });
 
+// Added styled components for custom info layout
+const FormContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(3),
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.shadows[1],
+  borderRadius: theme.shape.borderRadius,
+}));
+
+const InfoRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: "20px",
+  width: "100%",
+}));
+
+const InfoField = styled(TextField)(({ theme }) => ({
+  flex: 1,
+  "& .MuiInputLabel-root": {
+    color: theme.palette.text.secondary,
+    fontSize: "0.95rem",
+  },
+  "& .MuiInputBase-root": {
+    color: theme.palette.text.primary,
+    fontSize: "1.15rem",
+    backgroundColor: "#fff",
+    borderRadius: "8px",
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: theme.palette.divider,
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: theme.palette.primary.main,
+  },
+  "& .Mui-disabled": {
+    color: theme.palette.text.secondary,
+    WebkitTextFillColor: theme.palette.text.secondary,
+  },
+}));
+
 const ProfileHeader = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "flex-end",
@@ -115,25 +156,6 @@ const SettingTitle = styled(Typography)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-const FormContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(3),
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
-  borderRadius: theme.shape.borderRadius,
-}));
-
-const FormField = styled(TextField)(({ theme }) => ({
-  "& .MuiInputLabel-root": { color: theme.palette.text.secondary },
-  "& .MuiOutlinedInput-root": {
-    "& fieldset": { borderColor: theme.palette.divider },
-    "&:hover fieldset": { borderColor: theme.palette.primary.main },
-    "&.Mui-focused fieldset": { borderColor: theme.palette.primary.main },
-  },
-}));
-
 const FileUploadArea = styled(Box)(({ theme }) => ({
   border: `2px dashed ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
@@ -155,12 +177,7 @@ const ActionButtons = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-function SettingPage({
-  setCurrentPage,
-  currentUser,
-  authToken,
-  onProfileUpdate,
-}) {
+function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }) {
   // State for editing mode and loading status
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -176,7 +193,6 @@ function SettingPage({
   // State to store original data for cancellation
   const [originalData, setOriginalData] = useState({});
 
-  // Effect to populate form fields from currentUser prop or fetch data
   useEffect(() => {
     if (currentUser) {
       setPersonalEmail(currentUser.personalEmail || "");
@@ -211,7 +227,7 @@ function SettingPage({
     }
   }, [currentUser, authToken, setCurrentPage, onProfileUpdate]);
 
-  // Handler for toggling edit mode
+  // Handlers
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
@@ -219,24 +235,13 @@ function SettingPage({
     }
   };
 
-  // Handler for saving profile changes
   const handleSave = async () => {
     const changes = {};
-    if (personalEmail !== originalData.personalEmail) {
-      changes.personalEmail = personalEmail;
-    }
-    if (name !== originalData.name) {
-      changes.name = name;
-    }
-    if (phoneNumber !== originalData.phoneNumber) {
-      changes.phoneNumber = phoneNumber;
-    }
-    if (dob !== originalData.dob) {
-      changes.dob = dob;
-    }
-    if (bio !== originalData.bio) {
-      changes.bio = bio;
-    }
+    if (personalEmail !== originalData.personalEmail) changes.personalEmail = personalEmail;
+    if (name !== originalData.name) changes.name = name;
+    if (phoneNumber !== originalData.phoneNumber) changes.phoneNumber = phoneNumber;
+    if (dob !== originalData.dob) changes.dob = dob;
+    if (bio !== originalData.bio) changes.bio = bio;
 
     if (Object.keys(changes).length === 0) {
       toast.info("Không có thay đổi nào để lưu.");
@@ -253,9 +258,7 @@ function SettingPage({
         },
         body: JSON.stringify(changes),
       });
-
       if (response.ok) {
-        const data = await response.json();
         toast.success("Hồ sơ đã được cập nhật thành công!");
         setIsEditing(false);
         await onProfileUpdate(authToken);
@@ -263,12 +266,11 @@ function SettingPage({
         const errorData = await response.json();
         toast.error(errorData.message || "Cập nhật hồ sơ thất bại.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Đã xảy ra lỗi mạng khi cập nhật hồ sơ. Vui lòng thử lại.");
     }
   };
 
-  // Handler for canceling edits
   const handleCancel = () => {
     setIsEditing(false);
     setPersonalEmail(originalData.personalEmail || "");
@@ -279,7 +281,6 @@ function SettingPage({
     setRole(originalData.role || "");
   };
 
-  // Helper function to render form fields
   const renderField = (
     label,
     value,
@@ -305,7 +306,6 @@ function SettingPage({
     />
   );
 
-  // Show loading spinner
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -328,10 +328,7 @@ function SettingPage({
     );
   }
 
-  // Do not render if currentUser is null after loading
-  if (!currentUser) {
-    return null;
-  }
+  if (!currentUser) return null;
 
   return (
     <ThemeProvider theme={theme}>
@@ -346,9 +343,7 @@ function SettingPage({
                 sx={{ mt: 2, width: 120, height: 120 }}
               />
               <Box sx={{ my: 0 }}>
-                <ProfileName variant="h4">
-                  {currentUser?.name || "Người dùng"}
-                </ProfileName>
+                <ProfileName variant="h4">{currentUser?.name || "Người dùng"}</ProfileName>
                 <UserBio variant="body1">{bio || "Chưa có tiểu sử."}</UserBio>
               </Box>
             </ProfileHeader>
@@ -391,45 +386,59 @@ function SettingPage({
 
             <SettingTitle variant="h5">Thông tin cá nhân</SettingTitle>
             <FormContainer>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  {renderField(
-                    "Email Cá Nhân",
-                    personalEmail,
-                    setPersonalEmail,
-                    "email"
-                  )}
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField("Tên", name, setName)}
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField(
-                    "Số Điện Thoại",
-                    phoneNumber,
-                    setPhoneNumber,
-                    "tel"
-                  )}
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {renderField("Ngày Sinh", dob, setDob, "date")}
-                </Grid>
-                <Grid item xs={12}>
-                  {renderField("Tiểu sử", bio, setBio, "text", true)}
-                </Grid>
-                <Grid item xs={12}>
-                  {renderField(
-                    "Vai trò",
-                    role,
-                    setRole,
-                    "text",
-                    false,
-                    1,
-                    null,
-                    true
-                  )}
-                </Grid>
-              </Grid>
+              <InfoRow>
+                <InfoField
+                  label="Email Cá Nhân"
+                  value={personalEmail}
+                  onChange={(e) => setPersonalEmail(e.target.value)}
+                  disabled={!isEditing}
+                  type="email"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </InfoRow>
+              <InfoRow>
+                <InfoField
+                  label="Tên"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={!isEditing}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <InfoField
+                  label="Số Điện Thoại"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  disabled={!isEditing}
+                  type="tel"
+                  InputLabelProps={{ shrink: true }}
+                />
+                <InfoField
+                  label="Ngày Sinh"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  disabled={!isEditing}
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                />
+                <InfoField
+                  label="Vai trò"
+                  value={role}
+                  disabled
+                  InputLabelProps={{ shrink: true }}
+                />
+              </InfoRow>
+              {/* Tiểu sử nguyên dòng, multiline */}
+              <InfoRow>
+                <InfoField
+                  label="Tiểu sử"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  disabled={!isEditing}
+                  multiline
+                  minRows={3}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </InfoRow>
             </FormContainer>
 
             <SettingTitle variant="h5">Tải ảnh lên</SettingTitle>
@@ -442,19 +451,11 @@ function SettingPage({
                   gap: 1,
                 }}
               >
-                <CloudUploadIcon
-                  sx={{ fontSize: 32, color: theme.palette.text.secondary }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{ color: theme.palette.text.secondary }}
-                >
+                <CloudUploadIcon sx={{ fontSize: 32, color: theme.palette.text.secondary }} />
+                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                   Nhấp để tải lên hoặc kéo và thả
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: theme.palette.text.secondary }}
-                >
+                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
                   SVG, PNG, JPG hoặc GIF (tối đa 800x400px)
                 </Typography>
               </Box>

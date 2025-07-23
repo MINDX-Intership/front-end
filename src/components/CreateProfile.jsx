@@ -1,5 +1,4 @@
-// CreateProfile.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Button,
   TextField,
@@ -7,15 +6,15 @@ import {
   Typography,
   Container,
   CircularProgress,
-  FormControl, // New import
-  InputLabel, // New import
-  Select, // New import
-  MenuItem, // New import
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { styled } from '@mui/system';
-import { toast } from 'react-toastify'; // Import toast
+import { toast } from 'react-toastify';
 
-const FormContainer = styled(Box)(({ }) => ({
+const FormContainer = styled(Box)(() => ({
   marginTop: '64px',
   display: 'flex',
   flexDirection: 'column',
@@ -31,60 +30,56 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dob, setDob] = useState('');
-  const [jobPosition, setJobPosition] = useState(''); // State for selected job position ID
-  const [availableJobPositions, setAvailableJobPositions] = useState([]); // State to store fetched job positions
+  const [jobPosition, setJobPosition] = useState('');
+  const [availableJobPositions, setAvailableJobPositions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingJobPositions, setFetchingJobPositions] = useState(false);
 
-  useEffect(() => {
-    if (!authToken) {
-      setCurrentPage('/login');
-    }
-  }, [authToken, setCurrentPage]);
+  const fetchingJobPositionsRef = useRef(false);
 
-  // Effect to fetch job positions
   useEffect(() => {
     const fetchJobPositions = async () => {
+      if (fetchingJobPositionsRef.current) return;
+      fetchingJobPositionsRef.current = true;
+      setFetchingJobPositions(true);
+
       try {
-        // Assuming there's an API endpoint to get job positions
-        const response = await fetch('http://localhost:3000/api/jobpositions', {
+        const response = await fetch('http://localhost:3000/api/job-position/all', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`, // Include auth token if needed for this endpoint
+            'Authorization': `Bearer ${authToken}`,
           },
         });
         const data = await response.json();
         if (response.ok) {
-          setAvailableJobPositions(data.jobPositions); // Assuming data.jobPositions is an array of { _id, title }
+          setAvailableJobPositions(data.jobPositions);
         } else {
-          console.error('Failed to fetch job positions:', data.message);
-          toast.error('Không thể tải danh sách chức vụ. Vui lòng thử lại.');
+          toast.error(data.message || "Lỗi khi tải danh sách chức vụ.");
         }
       } catch (error) {
-        console.error('Error fetching job positions:', error);
-        toast.error('Lỗi kết nối khi tải danh sách chức vụ.');
+        console.error("Fetch job positions error:", error);
+        toast.error("Lỗi mạng hoặc lỗi không mong muốn khi tải chức vụ.");
+      } finally {
+        fetchingJobPositionsRef.current = false;
+        setFetchingJobPositions(false);
       }
     };
 
-    if (authToken) { // Only fetch if authToken is available
+    if (authToken) {
       fetchJobPositions();
+    } else {
+      toast.error("Không có token xác thực. Vui lòng đăng nhập lại.");
+      setCurrentPage('/login');
     }
-  }, [authToken]); // Dependency on authToken
+  }, [authToken, setCurrentPage]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
 
-    // Validate required fields including jobPosition
-    if (!personalEmail || !name || !phoneNumber || !dob || !jobPosition) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc: Email Cá Nhân, Tên, Số điện thoại, Ngày Sinh, và Chức vụ.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      console.log('CreateProfile: Using authToken in fetch header.');
-      const response = await fetch('http://localhost:3000/api/users/create-profile', {
+      const response = await fetch('http://localhost:3000/api/user/create-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,33 +90,44 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
           name,
           phoneNumber,
           dob,
-          jobPosition: [jobPosition], // Send jobPosition as an array containing the selected ID
+          jobPosition,
         }),
       });
 
       const data = await response.json();
-      setLoading(false);
 
       if (response.ok) {
-        console.log('Tạo hồ sơ thành công:', data);
-        toast.success('Tạo hồ sơ thành công!');
+        toast.success(data.message || 'Hồ sơ đã được tạo thành công!');
         onProfileCreated();
       } else {
-        console.error('Tạo hồ sơ thất bại:', data);
-        toast.error(data.message || 'Tạo hồ sơ thất bại. Vui lòng thử lại.');
+        toast.error(data.message || 'Tạo hồ sơ thất bại.');
       }
-    } catch (err) {
-      console.error('Lỗi mạng hoặc lỗi không mong muốn:', err);
-      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+    } catch (error) {
+      console.error('Lỗi khi tạo hồ sơ:', error);
+      toast.error('Lỗi mạng hoặc lỗi không mong muốn khi tạo hồ sơ.');
+    } finally {
       setLoading(false);
     }
   };
 
+  if (fetchingJobPositions) {
+    return (
+      <Container component="main" maxWidth="xs">
+        <FormContainer>
+          <CircularProgress />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Đang tải danh sách chức vụ...
+          </Typography>
+        </FormContainer>
+      </Container>
+    );
+  }
+
   return (
     <Container component="main" maxWidth="sm">
       <FormContainer>
-        <Typography component="h1" variant="h5" color="#4a90e2" sx={{ mb: 3, fontWeight: 600, fontSize: '1.5rem' }}>
-          Tạo Hồ Sơ Của Bạn
+        <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
+          Tạo Hồ Sơ Người Dùng
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
           <TextField
@@ -134,31 +140,17 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             autoComplete="email"
             value={personalEmail}
             onChange={(e) => setPersonalEmail(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#e0e0e0' },
-                '&:hover fieldset': { borderColor: '#4a90e2' },
-                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
-              },
-            }}
           />
           <TextField
             margin="normal"
             required
             fullWidth
             id="name"
-            label="Tên"
+            label="Họ và Tên"
             name="name"
             autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#e0e0e0' },
-                '&:hover fieldset': { borderColor: '#4a90e2' },
-                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
-              },
-            }}
           />
           <TextField
             margin="normal"
@@ -170,13 +162,6 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             autoComplete="tel"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#e0e0e0' },
-                '&:hover fieldset': { borderColor: '#4a90e2' },
-                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
-              },
-            }}
           />
           <TextField
             margin="normal"
@@ -186,27 +171,15 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
             label="Ngày Sinh"
             name="dob"
             type="date"
-            InputLabelProps={{
-              shrink: true,
+            InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: "1900-01-01",
+              max: new Date().toISOString().split("T")[0],
             }}
             value={dob}
             onChange={(e) => setDob(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#e0e0e0' },
-                '&:hover fieldset': { borderColor: '#4a90e2' },
-                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
-              },
-            }}
           />
-          {/* Replaced TextField with Select for jobPosition */}
-          <FormControl fullWidth margin="normal" required sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#e0e0e0' },
-                '&:hover fieldset': { borderColor: '#4a90e2' },
-                '&.Mui-focused fieldset': { borderColor: '#4a90e2' },
-              },
-            }}>
+          <FormControl fullWidth margin="normal" required>
             <InputLabel id="job-position-label">Chức vụ</InputLabel>
             <Select
               labelId="job-position-label"
@@ -215,9 +188,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
               label="Chức vụ"
               onChange={(e) => setJobPosition(e.target.value)}
             >
-              <MenuItem value="">
-                <em>Chọn chức vụ</em>
-              </MenuItem>
+              <MenuItem value=""><em>Chọn chức vụ</em></MenuItem>
               {availableJobPositions.map((position) => (
                 <MenuItem key={position._id} value={position._id}>
                   {position.title}
@@ -225,12 +196,11 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
               ))}
             </Select>
           </FormControl>
-
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}
+            sx={{ mt: 3, mb: 10, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : 'Tạo Hồ Sơ'}

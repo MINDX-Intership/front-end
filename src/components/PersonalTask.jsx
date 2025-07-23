@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -28,29 +28,106 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Send as SendIcon,
-  CalendarMonth as CalendarMonthIcon, // Added Calendar icon
+  CalendarMonth as CalendarMonthIcon,
 } from '@mui/icons-material';
+import axios from 'axios'; // Import Axios
 
-// Simulate a current user ID for demonstration
-const CURRENT_USER_ID = 'user-123';
+// Simulate a current user ID for demonstration (will be replaced by actual user ID from auth)
+// In a real application, this CURRENT_USER_ID would come from your authentication context.
+const CURRENT_USER_ID = 'user-123'; // This will represent the authenticated user's ID
 const ASSIGNER_USER_ID = 'user-assigner-456'; // A different user ID for assigned tasks
 
-// Initial state for a new task form - Removed 'description'
+// Base URL for your API
+const API_BASE_URL = '/api/task'; // Adjust if your API is on a different path or port
+
+// Initial state for a new task form
 const initialFormState = {
   id: null,
   title: '',
   date: '',
   time: '',
   completionPercentage: 0,
-  isAssigned: false,
+  isAssigned: false, // This flag helps differentiate in FE logic
   createdBy: null,
+  status: 'not_started', // Map completionPercentage to status
 };
 
-function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
-  const [selfCreatedTasks, setSelfCreatedTasks] = useState(() => {
+function PersonalTask({ setCurrentPage }) {
+  const [selfCreatedTasks, setSelfCreatedTasks] = useState([]);
+  const [assignedTasks, setAssignedTasks] = useState([]);
+
+  // State for UI interactions
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const [taskCommentInput, setTaskCommentInput] = useState({});
+
+  // Assume you have a way to get the auth token
+  const getAuthToken = useCallback(() => {
+    // Replace with your actual token retrieval logic (e.g., from localStorage, context)
+    return localStorage.getItem('authToken'); // Example
+  }, []);
+
+  const showSnackbar = useCallback((message, severity) => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
+
+  const handleCloseSnackbar = useCallback((event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  // --- Fetch Tasks from Backend ---
+  const fetchMyTasks = useCallback(async () => {
     try {
-      const storedTasks = localStorage.getItem('selfCreatedTasks');
-      return storedTasks ? JSON.parse(storedTasks) : [
+      const token = getAuthToken();
+      if (!token) {
+        showSnackbar('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.', 'error');
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/my-tasks`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Assuming tasks from backend are 'assigned' tasks
+      const formattedAssignedTasks = response.data.map(task => ({
+        id: task._id, // Backend uses _id
+        title: task.title,
+        description: task.description, // Assuming description exists
+        date: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '', // Adjust as per your backend's date format
+        time: task.dueDate ? new Date(task.dueDate).toTimeString().split(' ')[0].substring(0, 5) : '', // Adjust time
+        completionPercentage: task.status === 'completed' ? 100 : (task.status === 'in_progress' ? 50 : 0), // Map status to percentage
+        isAssigned: true,
+        createdBy: task.createdBy, // Backend provides createdBy
+        comments: task.comments.map(comment => ({ // Map backend comments to frontend format
+          id: comment._id || Date.now(),
+          text: comment.content,
+          timestamp: new Date(comment.date).toLocaleString(),
+          userId: comment.userId,
+        })),
+        status: task.status, // Keep original status
+      }));
+      setAssignedTasks(formattedAssignedTasks);
+    } catch (error) {
+      console.error("Lỗi khi tải nhiệm vụ được giao:", error);
+      showSnackbar('Lỗi khi tải nhiệm vụ được giao.', 'error');
+    }
+  }, [getAuthToken, showSnackbar]);
+
+  // Initial load of assigned tasks
+  useEffect(() => {
+    fetchMyTasks();
+    // For self-created tasks, if you manage them locally or have a separate API, load them here.
+    // For now, keep the local storage logic for self-created tasks as a fallback/example.
+    try {
+      const storedSelfCreatedTasks = localStorage.getItem('selfCreatedTasks');
+      setSelfCreatedTasks(storedSelfCreatedTasks ? JSON.parse(storedSelfCreatedTasks) : [
         {
           id: 'self-1', title: 'Viết bài blog mới', date: '2025-07-28', time: '14:00',
           completionPercentage: 50,
@@ -62,82 +139,32 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
           completionPercentage: 100,
           comments: [], isAssigned: false, createdBy: CURRENT_USER_ID
         },
-      ];
+      ]);
     } catch (error) {
       console.error("Failed to parse selfCreatedTasks from localStorage", error);
-      return [];
     }
-  });
+  }, [fetchMyTasks]);
 
-  const [assignedTasks, setAssignedTasks] = useState(() => {
-    try {
-      const storedTasks = localStorage.getItem('assignedTasks');
-      return storedTasks ? JSON.parse(storedTasks) : [
-        {
-          id: 'assigned-1', title: 'Hello world2', date: '2025-07-25', time: '17:00',
-          completionPercentage: 25,
-          comments: [
-            { id: Date.now() - 3000, text: 'Cần số liệu từ phòng kinh doanh.', timestamp: '2025-07-20 10:00:00' },
-            { id: Date.now() - 2500, text: 'Đã gửi yêu cầu lấy số liệu.', timestamp: '2025-07-20 14:00:00' },
-          ],
-          isAssigned: true, createdBy: ASSIGNER_USER_ID
-        },
-        {
-          id: 'assigned-2', title: 'Hello world', date: '2025-07-22', time: '10:00',
-          completionPercentage: 75,
-          comments: [], isAssigned: true, createdBy: ASSIGNER_USER_ID
-        },
-        {
-          id: 'assigned-3', title: 'Họp ban quản lý', date: '2025-07-23', time: '09:00',
-          completionPercentage: 100,
-          comments: [
-            { id: Date.now() - 1500, text: 'Đã hoàn thành chuẩn bị tài liệu.', timestamp: '2025-07-21 14:30:00' },
-          ],
-          isAssigned: true, createdBy: ASSIGNER_USER_ID
-        },
-      ];
-    } catch (error) {
-      console.error("Failed to parse assignedTasks from localStorage", error);
-      return [];
-    }
-  });
-
-  // Persist tasks to localStorage whenever they change
+  // Persist self-created tasks to localStorage whenever they change
   React.useEffect(() => {
     localStorage.setItem('selfCreatedTasks', JSON.stringify(selfCreatedTasks));
   }, [selfCreatedTasks]);
 
-  React.useEffect(() => {
-    localStorage.setItem('assignedTasks', JSON.stringify(assignedTasks));
-  }, [assignedTasks]);
+  // The assignedTasks are now primarily managed by the backend, so no localStorage persist for them.
 
-
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [formData, setFormData] = useState(initialFormState);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-  const [taskCommentInput, setTaskCommentInput] = useState({});
-
-  const showSnackbar = useCallback((message, severity) => {
-    setSnackbar({ open: true, message, severity });
-  }, []);
-
-  const handleCloseSnackbar = useCallback((event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  }, []);
 
   const openTaskDialog = useCallback((task = null) => {
-    if (task && !task.isAssigned && task.createdBy !== CURRENT_USER_ID) {
+    // Allow editing assigned tasks for completion percentage, but not title/date/time
+    if (task && task.isAssigned) {
+      setEditingTask(task);
+      setFormData({ ...task });
+    } else if (task && !task.isAssigned && task.createdBy !== CURRENT_USER_ID) {
       showSnackbar('Bạn không có quyền chỉnh sửa nhiệm vụ này.', 'error');
       return;
+    } else {
+      setEditingTask(task);
+      setFormData(task ? { ...task } : { ...initialFormState, id: Date.now(), isAssigned: false, createdBy: CURRENT_USER_ID });
     }
-    setEditingTask(task);
-    setFormData(task ? { ...task } : { ...initialFormState, id: Date.now(), isAssigned: false, createdBy: CURRENT_USER_ID });
     setOpenDialog(true);
   }, [showSnackbar]);
 
@@ -162,38 +189,62 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
     }));
   }, []);
 
-  const handleSaveTask = useCallback(() => {
+  const handleSaveTask = useCallback(async () => {
     if (!formData.title || !formData.date || !formData.time) {
       showSnackbar('Vui lòng điền đầy đủ các trường bắt buộc (Tiêu đề, Ngày, Giờ).', 'error');
       return;
     }
 
     const taskToSave = { ...formData };
-
-    const updateTaskLists = (prevTasksList) => {
-      if (editingTask) {
-        return prevTasksList.map((task) => (task.id === taskToSave.id ? taskToSave : task));
-      } else {
-        return [...prevTasksList, { ...taskToSave, comments: [] }];
-      }
-    };
-
-    if (taskToSave.isAssigned) {
-      setAssignedTasks(updateTaskLists);
-    } else {
-      setSelfCreatedTasks(updateTaskLists);
+    const token = getAuthToken();
+    if (!token) {
+      showSnackbar('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.', 'error');
+      return;
     }
 
-    showSnackbar(
-      editingTask ? 'Mục nhiệm vụ đã được cập nhật thành công!' : 'Mục nhiệm vụ đã được tạo thành công!',
-      'success'
-    );
-    closeDialog();
-  }, [formData, editingTask, showSnackbar, closeDialog]);
+    if (taskToSave.isAssigned) {
+      // For assigned tasks, only update status/completion percentage via submitTaskInfo
+      try {
+        const newStatus = taskToSave.completionPercentage === 100 ? 'completed' : (taskToSave.completionPercentage > 0 ? 'in_progress' : 'not_started');
+        await axios.post(`${API_BASE_URL}/${taskToSave.id}/submit`, {
+          submitInfo: {
+            completionPercentage: taskToSave.completionPercentage,
+            status: newStatus,
+            // You can add more info here if needed for submission
+          }
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        showSnackbar('Trạng thái nhiệm vụ được giao đã được cập nhật!', 'success');
+        fetchMyTasks(); // Re-fetch assigned tasks to get latest state from backend
+        closeDialog();
+      } catch (error) {
+        console.error("Lỗi khi cập nhật nhiệm vụ được giao:", error);
+        showSnackbar('Lỗi khi cập nhật nhiệm vụ được giao.', 'error');
+      }
+    } else {
+      // For self-created tasks, continue with local state management
+      const updateTaskLists = (prevTasksList) => {
+        if (editingTask) {
+          return prevTasksList.map((task) => (task.id === taskToSave.id ? taskToSave : task));
+        } else {
+          return [...prevTasksList, { ...taskToSave, comments: [] }];
+        }
+      };
+      setSelfCreatedTasks(updateTaskLists);
+      showSnackbar(
+        editingTask ? 'Mục nhiệm vụ tự tạo đã được cập nhật thành công!' : 'Mục nhiệm vụ tự tạo đã được tạo thành công!',
+        'success'
+      );
+      closeDialog();
+    }
+  }, [formData, editingTask, showSnackbar, closeDialog, getAuthToken, fetchMyTasks]);
 
   const handleDeleteTask = useCallback((idToDelete, isAssigned, createdBy) => {
     if (isAssigned) {
-      showSnackbar('Không thể xóa nhiệm vụ được giao trực tiếp từ đây.', 'warning');
+      showSnackbar('Không thể xóa nhiệm vụ được giao trực tiếp từ đây. Vui lòng liên hệ người giao nhiệm vụ.', 'warning');
       return;
     }
     if (createdBy !== CURRENT_USER_ID) {
@@ -229,35 +280,54 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
   }, [allSortedTasks, getCompletionPercentage]);
 
 
-  const handleAddComment = useCallback((taskId, isAssigned) => {
+  const handleAddComment = useCallback(async (taskId, isAssigned) => {
     const newCommentText = taskCommentInput[taskId] || '';
     if (newCommentText.trim() === '') {
       showSnackbar('Bình luận không được để trống.', 'error');
       return;
     }
 
-    const newComment = {
-      id: Date.now(),
-      text: newCommentText.trim(),
-      timestamp: new Date().toLocaleString(),
-    };
-
-    const updateComments = (prevTasksList) =>
-      prevTasksList.map((task) =>
-        task.id === taskId
-          ? { ...task, comments: [...(task.comments || []), newComment] }
-          : task
-      );
-
-    if (isAssigned) {
-      setAssignedTasks(updateComments);
-    } else {
-      setSelfCreatedTasks(updateComments);
+    const token = getAuthToken();
+    if (!token) {
+      showSnackbar('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.', 'error');
+      return;
     }
 
-    setTaskCommentInput((prev) => ({ ...prev, [taskId]: '' }));
-    showSnackbar('Bình luận đã được thêm!', 'success');
-  }, [taskCommentInput, showSnackbar]);
+    try {
+      if (isAssigned) {
+        // Send comment to backend for assigned tasks
+        await axios.post(`${API_BASE_URL}/${taskId}/comment`, {
+          comment: newCommentText.trim(),
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        showSnackbar('Bình luận đã được thêm vào nhiệm vụ được giao!', 'success');
+        fetchMyTasks(); // Re-fetch tasks to update comments
+      } else {
+        // For self-created tasks, update locally
+        const newComment = {
+          id: Date.now(),
+          text: newCommentText.trim(),
+          timestamp: new Date().toLocaleString(),
+          userId: CURRENT_USER_ID, // Assuming current user is creator of self-created task
+        };
+        setSelfCreatedTasks((prevTasksList) =>
+          prevTasksList.map((task) =>
+            task.id === taskId
+              ? { ...task, comments: [...(task.comments || []), newComment] }
+              : task
+          )
+        );
+        showSnackbar('Bình luận đã được thêm vào nhiệm vụ tự tạo!', 'success');
+      }
+      setTaskCommentInput((prev) => ({ ...prev, [taskId]: '' }));
+    } catch (error) {
+      console.error("Lỗi khi thêm bình luận:", error);
+      showSnackbar('Lỗi khi thêm bình luận.', 'error');
+    }
+  }, [taskCommentInput, showSnackbar, getAuthToken, fetchMyTasks]);
 
   const handleViewTimeline = useCallback(() => {
     setCurrentPage('/timeline');
@@ -323,14 +393,38 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
                         control={
                           <Checkbox
                             checked={task.completionPercentage === 100}
-                            onChange={(e) => {
+                            onChange={async (e) => {
                               const newValue = e.target.checked ? 100 : task.completionPercentage;
+                              const newStatus = e.target.checked ? 'completed' : (task.completionPercentage > 0 ? 'in_progress' : 'not_started');
+                              const token = getAuthToken();
+
+                              if (!token) {
+                                showSnackbar('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.', 'error');
+                                return;
+                              }
+
                               if (task.isAssigned) {
-                                setAssignedTasks(prev => prev.map(t => t.id === task.id ? { ...t, completionPercentage: newValue } : t));
+                                try {
+                                  await axios.post(`${API_BASE_URL}/${task.id}/submit`, {
+                                    submitInfo: {
+                                      completionPercentage: newValue,
+                                      status: newStatus,
+                                    }
+                                  }, {
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  });
+                                  showSnackbar('Trạng thái hoàn thành đã được cập nhật!', 'info');
+                                  fetchMyTasks(); // Re-fetch to get updated task
+                                } catch (error) {
+                                  console.error("Lỗi khi cập nhật trạng thái nhiệm vụ được giao:", error);
+                                  showSnackbar('Lỗi khi cập nhật trạng thái nhiệm vụ được giao.', 'error');
+                                }
                               } else {
                                 setSelfCreatedTasks(prev => prev.map(t => t.id === task.id ? { ...t, completionPercentage: newValue } : t));
+                                showSnackbar('Trạng thái hoàn thành đã được cập nhật!', 'info');
                               }
-                              showSnackbar('Trạng thái hoàn thành đã được cập nhật!', 'info');
                             }}
                             color="primary"
                             size="small"
@@ -348,7 +442,7 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
                       </Typography>
                       {task.createdBy && (
                         <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem', ml: 3.5 }}>
-                          Người tạo: {task.createdBy === CURRENT_USER_ID ? 'Bạn' : 'Người giao'}
+                          Người tạo: {task.createdBy === CURRENT_USER_ID ? 'Bạn' : (task.isAssigned ? 'Người giao' : task.createdBy)}
                         </Typography>
                       )}
                     </Box>
@@ -378,7 +472,8 @@ function PersonalTask({ setCurrentPage }) { // Accept setCurrentPage prop
                             key={comment.id}
                             primary={
                               <Typography variant="caption" component="span" sx={{ fontWeight: 'bold' }}>
-                                Bạn:
+                                {/* Display 'You' if userId matches CURRENT_USER_ID, otherwise display the userId or a generic 'Người khác' */}
+                                {comment.userId === CURRENT_USER_ID ? 'Bạn:' : (task.isAssigned && task.createdBy === comment.userId ? 'Người giao:' : 'Người khác:')}
                               </Typography>
                             }
                             secondary={

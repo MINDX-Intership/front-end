@@ -28,8 +28,9 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
       if (response.ok) {
         console.log('Login successful:', data);
         console.log('Token received for login success:', data.token);
-        // Changed: Only pass token, as App.jsx's fetchUserProfile will get full account data
-        onLoginSuccess(data.token);
+        toast.success("Đăng nhập thành công!"); // Toast for successful login
+        setCurrentPage('/homepage'); // Redirect to homepage immediately after login
+        onLoginSuccess(data.token); // Pass token to App.jsx for further processing (e.g., fetching profile)
       } else {
         console.error('Login failed:', data);
         toast.error(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.');

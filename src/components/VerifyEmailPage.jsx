@@ -1,22 +1,22 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Container } from '@mui/material';
-import { toast } from 'react-toastify'; // Import toast
+import { toast } from 'react-toastify';
 
 const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
-  const [isVerifying, setIsVerifying] = useState(true); // Control CircularProgress
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     if (!token) {
       toast.error('Không tìm thấy token xác thực.');
-      setTimeout(() => setCurrentPage('/login'), 3000);
+      setTimeout(() => setCurrentPage('/login'), 2000);
       return;
     }
 
     const verifyAccountAndCreateProfile = async () => {
-      setIsVerifying(true); // Start verifying
+      setIsVerifying(true);
       try {
-        console.log('VerifyEmailPage: Using token in verification URL.');
+        console.log('VerifyEmailPage: Using token in verification URL.',token);
         const verificationResponse = await fetch(`http://localhost:3000/api/account/verify-email/${token}`, {
           method: 'GET',
           headers: {

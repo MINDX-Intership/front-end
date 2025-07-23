@@ -115,7 +115,7 @@ function PersonalWork() {
           Lịch làm việc
         </Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => openEditDialog()}>
-          Tạo công ăn việc làm
+          Tạo lịch làm việc cá nhân
         </Button>
       </Box>
 
@@ -130,7 +130,7 @@ function PersonalWork() {
 
       {schedule.length === 0 ? (
         <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', mt: 5 }}>
-          Chưa có công ăn việc làm!
+          Chưa có lịch nào!
         </Typography>
       ) : (
         <List>

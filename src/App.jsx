@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -18,16 +18,17 @@ import Timeline from './components/Timeline';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { CircularProgress } from '@mui/material';
 
 function App() {
-  // State management for current page, authentication token, user data, and loading status
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
   const [authToken, setAuthToken] = useState(localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(null);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
-  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Effect for handling browser history navigation (popstate)
+  const fetchingRef = useRef(false);
+
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPage(window.location.pathname);
@@ -38,18 +39,23 @@ function App() {
     };
   }, []);
 
-  // Callback for navigating between pages
   const navigate = useCallback((path) => {
     window.history.pushState(null, '', path);
     setCurrentPage(path);
-  }, [currentPage]);
+  }, []);
 
-  // Callback for fetching user profile
   const fetchUserProfile = useCallback(async (token) => {
-    if (!token || isFetchingProfile) {
-      return null;
+    if (!token) {
+      console.log("No token provided to fetchUserProfile.");
+      return { needsProfileCreation: false, error: false, user: null };
     }
+    if (fetchingRef.current) {
+      return { needsProfileCreation: false, error: false, user: null };
+    }
+
+    fetchingRef.current = true;
     setIsFetchingProfile(true);
+
     try {
       const response = await fetch('http://localhost:3000/api/user/me', {
         method: 'GET',
@@ -68,104 +74,129 @@ function App() {
           return { needsProfileCreation: false, error: false, user: data.user };
         }
       } else {
-        localStorage.removeItem('token');
-        setAuthToken(null);
         setCurrentUser(null);
-        toast.error(data.message || "Lỗi khi tải hồ sơ người dùng. Vui lòng đăng nhập lại.");
-        return { needsProfileCreation: false, error: true, user: null };
+        console.error("Error fetching profile, response not ok:", data.message);
+        return { needsProfileCreation: false, error: true, user: null, message: data.message };
       }
     } catch (error) {
-      localStorage.removeItem('token');
-      setAuthToken(null);
+      console.error("Fetch profile network/unexpected error:", error);
       setCurrentUser(null);
-      toast.error("Lỗi mạng hoặc lỗi không mong muốn khi tải hồ sơ. Vui lòng thử lại.");
-      return { needsProfileCreation: false, error: true, user: null };
+      return { needsProfileCreation: false, error: true, user: null, message: error.message };
     } finally {
+      fetchingRef.current = false;
       setIsFetchingProfile(false);
     }
-  }, [isFetchingProfile]);
-
-  // Effect for initial session check and profile loading
-  // MODIFIED: Removed automatic navigation to /login on profile error or no token
-  useEffect(() => {
-    const initializeUserSession = async () => {
-      if (authToken && !isFetchingProfile) {
-        const profileResult = await fetchUserProfile(authToken);
-        // Original: if (profileResult && profileResult.needsProfileCreation) { navigate('/create-profile'); }
-        // Keeping navigate to create-profile if profile is needed
-        if (profileResult && profileResult.needsProfileCreation) {
-          navigate('/create-profile');
-        }
-        // Original: else if (profileResult && profileResult.error) { navigate('/login'); }
-        // Removed automatic navigation to /login on profile error
-      }
-      // Original: else if (!authToken && !isFetchingProfile && !['/login', '/register', '/forgot-password', '/reset-password', '/about', '/timeline'].includes(currentPage)) { }
-      // Removed automatic navigation for unauthenticated users
-      setInitialLoadAttempted(true);
-    };
-
-    if (!initialLoadAttempted) {
-      initializeUserSession();
-    } else if (authToken && !currentUser && !isFetchingProfile) {
-      initializeUserSession();
-    }
-  }, [authToken, fetchUserProfile, navigate, currentPage, isFetchingProfile, initialLoadAttempted, currentUser]);
-
-  // Effect for post-login/profile update navigation
-  // MODIFIED: Removed automatic navigation to /homepage
-  useEffect(() => {
-    // Original: if (authToken && currentUser && initialLoadAttempted) {
-    // Original:   const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/'];
-    // Original:   const isOnPublicPage = publicPaths.includes(currentPage);
-    // Original:   if (isOnPublicPage || currentPage === '/') {
-    // Original:     navigate('/homepage');
-    // Original:   }
-    // Original: }
-    // Removed all automatic navigation to homepage
-  }, [authToken, currentUser, currentPage, navigate, initialLoadAttempted]);
-
-  // Callback for successful login
-  const handleLoginSuccess = useCallback(async (token) => {
-    localStorage.setItem('token', token);
-    setAuthToken(token);
-    toast.success("Đăng nhập thành công!");
-    // The user will now remain on the page where login was initiated,
-    // or navigate manually if needed.
-    // To ensure user is directed to homepage after login, you might
-    // consider adding navigate('/homepage') here if desired.
-    // However, the request was to remove all automatic navigations.
-    // So for now, keeping it minimal.
   }, []);
 
-  // Callback for user logout
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     setAuthToken(null);
     setCurrentUser(null);
-    setInitialLoadAttempted(false);
+    setIsInitializing(true);
     toast.info("Bạn đã đăng xuất.");
-    navigate('/login'); // Keeping this navigation for logout as it's a user-initiated action
+    navigate('/login');
   }, [navigate]);
 
-  // Callback for profile creation/update
+  useEffect(() => {
+    const initializeApp = async () => {
+      setIsInitializing(true);
+      if (authToken) {
+        const profileResult = await fetchUserProfile(authToken);
+        if (profileResult.needsProfileCreation) {
+          toast.warn("Không tìm thấy hồ sơ người dùng. Vui lòng tạo hồ sơ.");
+          navigate('/create-profile');
+        } else if (profileResult.error) {
+          toast.error(profileResult.message || "Phiên đăng nhập không hợp lệ hoặc có lỗi. Vui lòng đăng nhập lại.");
+          handleLogout();
+        } else if (profileResult.user) {
+          // REMOVED: The condition that caused immediate redirect to homepage
+          // const publicOrRootPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
+          // if (publicOrRootPages.some(publicPath => currentPage.startsWith(publicPath))) {
+          //   navigate('/homepage');
+          // }
+          // If the user is authenticated and on a public page, they will now remain there
+          // unless another specific condition forces a redirect (e.g., no profile).
+          // If you want to ensure authenticated users always go to homepage when opening the app,
+          // regardless of the initial URL, you might add:
+          // if (currentPage === '/' || currentPage === '/login' || currentPage === '/register') {
+          //   navigate('/homepage');
+          // }
+          // However, for allowing them to stay on about/timeline if they explicitly navigate there,
+          // the current removal is sufficient.
+        }
+      } else {
+        const publicPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
+        if (!publicPages.some(publicPath => currentPage.startsWith(publicPath))) {
+          navigate('/login');
+        }
+      }
+      setIsInitializing(false);
+    };
+
+    initializeApp();
+  }, [authToken, navigate, fetchUserProfile, currentPage, handleLogout]);
+
+  const handleLoginSuccess = useCallback(async (token) => {
+    localStorage.setItem('token', token);
+    setAuthToken(token);
+
+    toast.success("Đăng nhập thành công!");
+
+    const profileResult = await fetchUserProfile(token);
+    if (profileResult.needsProfileCreation) {
+      toast.warn("Bạn chưa có hồ sơ. Vui lòng tạo hồ sơ.");
+      navigate('/create-profile');
+    } else if (profileResult.error) {
+      toast.error(profileResult.message || "Đăng nhập thành công nhưng không thể tải hồ sơ. Vui lòng thử lại.");
+    } else {
+      navigate('/homepage'); // Keep this redirect after successful login
+    }
+  }, [fetchUserProfile, navigate]);
+
   const handleProfileCreatedOrUpdated = useCallback(async () => {
     toast.success("Hồ sơ đã được tạo/cập nhật thành công!");
     if (authToken) {
-      await fetchUserProfile(authToken);
+      const profileResult = await fetchUserProfile(authToken);
+      if (profileResult.user) {
+        navigate('/profile');
+      } else {
+        toast.error("Có lỗi khi tải lại hồ sơ sau khi tạo/cập nhật. Vui lòng thử lại đăng nhập.");
+        handleLogout();
+      }
     }
-  }, [authToken, fetchUserProfile]);
+  }, [authToken, fetchUserProfile, navigate, handleLogout]);
 
-  // Function to render the current page component based on the path
   const renderCurrentPage = () => {
     const path = currentPage;
 
-    // Display loading spinner while initial session check is in progress
-    if (!initialLoadAttempted && authToken) {
+    if (isInitializing) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-          <p>Đang tải hồ sơ...</p>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', flexDirection: 'column' }}>
+          <CircularProgress />
+          <p style={{ marginTop: '16px' }}>Đang tải dữ liệu phiên đăng nhập...</p>
         </div>
       );
+    }
+
+    const publicPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
+    const isPublicPage = publicPages.some(publicPath => path.startsWith(publicPath));
+
+    // If no auth token and not a public page, redirect to login
+    if (!isPublicPage && !authToken) {
+      navigate('/login');
+      return null;
+    }
+
+    // If authenticated and on login/register, redirect to homepage
+    if ((path === '/login' || path === '/register') && authToken && currentUser) {
+      navigate('/homepage');
+      return null;
+    }
+
+    // If authenticated but no user profile, redirect to create-profile (unless already there)
+    if (authToken && !currentUser && !isPublicPage && path !== '/create-profile') {
+        navigate('/create-profile');
+        return null;
     }
 
     switch (true) {
@@ -176,11 +207,9 @@ function App() {
       case path === '/forgot-password':
         return <ForgotPassword setCurrentPage={navigate} />;
       case path.startsWith('/reset-password/'):
-        // Để lấy token từ URL như /reset-password/YOUR_TOKEN_HERE
         const resetToken = path.split('/reset-password/')[1];
         return <ResetPassword setCurrentPage={navigate} token={resetToken} />;
-      case path.startsWith('/verify-email/'): // Thay đổi từ path === '/verify-email' và thêm logic lấy token
-        // Trích xuất token từ đường dẫn
+      case path.startsWith('/verify-email/'):
         const emailVerificationToken = path.split('/verify-email/')[1];
         if (!emailVerificationToken) {
             return (
@@ -191,31 +220,17 @@ function App() {
         }
         return (
           <VerifyEmailPage
-            token={emailVerificationToken} // Truyền token đã trích xuất
+            token={emailVerificationToken}
             setCurrentPage={navigate}
             onVerificationSuccess={handleLoginSuccess}
           />
         );
       case path === '/profile':
-        if (!authToken) {
-            // Original: navigate('/login'); return null;
-            // Changed: Show a message instead of navigating
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để xem hồ sơ.</p>
-                </div>
-            );
-        }
-        return <Profile setCurrentPage={navigate} currentUser={currentUser} authToken={authToken} onProfileUpdate={handleProfileCreatedOrUpdated} />;
+        return <Profile setCurrentPage={navigate} currentUser={currentUser} authToken={authToken} onProfileUpdate={fetchUserProfile} />;
       case path === '/create-profile':
         if (!authToken) {
-            // Original: navigate('/login'); return null;
-            // Changed: Show a message instead of navigating
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để tạo hồ sơ.</p>
-                </div>
-            );
+            navigate('/login');
+            return null;
         }
         return (
           <CreateProfile
@@ -225,64 +240,34 @@ function App() {
           />
         );
       case path === '/personal-work':
-        if (!authToken) {
-
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để xem công việc cá nhân.</p>
-                </div>
-            );
-        }
         return <PersonalWork setCurrentPage={navigate} />;
       case path === '/personal-task':
-        if (!authToken) {
-            // Original: return <Login setCurrentPage={navigate} onLoginSuccess={handleLoginSuccess} />;
-            // Changed: Show a message instead of rendering Login component
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để xem công việc cá nhân.</p>
-                </div>
-            );
-        }
         return <PersonalTask setCurrentPage={navigate} />;
       case path === '/notifications':
-        if (!authToken) {
-            // Original: return <Login setCurrentPage={navigate} onLoginSuccess={handleLoginSuccess} />;
-            // Changed: Show a message instead of rendering Login component
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để xem thông báo.</p>
-                </div>
-            );
-        }
         return <Notifications setCurrentPage={navigate} />;
       case path === '/chat':
-        if (!authToken) {
-            // Original: return <Login setCurrentPage={navigate} onLoginSuccess={handleLoginSuccess} />;
-            // Changed: Show a message instead of rendering Login component
-            return (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <p>Bạn cần đăng nhập để vào phòng chat.</p>
-                </div>
-            );
-        }
         return <Chat setCurrentPage={navigate} />;
       case path === '/about':
         return <About />;
       case path === '/timeline':
         return <Timeline />;
-      default:
-        // Nếu không khớp với bất kỳ case nào ở trên, và người dùng đã đăng nhập, hiển thị Homepage
-        if (authToken && currentUser) {
-          return <Homepage setCurrentPage={navigate} />;
+      case path === '/homepage':
+      case path === '/':
+        // If not authenticated or no user, redirect to login (handled by the general check above)
+        if (!authToken || !currentUser) {
+            navigate('/login');
+            return null;
         }
-        // Nếu không có authToken và đã cố gắng tải lần đầu (initialLoadAttempted)
-        // Đây có thể là trường hợp người dùng cố gắng truy cập một đường dẫn không tồn tại
-        // hoặc đường dẫn không yêu cầu đăng nhập nhưng không có trang cụ thể
+        return <Homepage setCurrentPage={navigate} />;
+      default:
+        // If an unknown path and authenticated, redirect to homepage
+        if (authToken && currentUser) {
+          navigate('/homepage');
+          return null;
+        }
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-            <p>Trang không tìm thấy hoặc bạn cần đăng nhập.</p>
-            {/* Bạn có thể thêm nút hoặc liên kết để đăng nhập ở đây nếu muốn */}
+            <p>Trang không tìm thấy.</p>
             </div>
         );
     }
