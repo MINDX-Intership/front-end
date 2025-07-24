@@ -130,7 +130,7 @@ const Timeline = () => {
             ))}
           </Box>
 
-          {/* Task Rows */}
+          {/* Task Rows */} 
           {dummyProjectData.map(phase => (
             <Box key={`row-${phase.id}`} className="timeline-task-row">
               {phase.tasks.map(task => (
@@ -146,6 +146,8 @@ const Timeline = () => {
                 </Box>
               ))}
             </Box>
+
+
           ))}
         </Box>
       </Box>

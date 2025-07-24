@@ -6,7 +6,6 @@ import Profile from './components/Profile';
 import ResetPassword from './components/ResetPassword';
 import ForgotPassword from './components/ForgotPassword';
 import Homepage from './components/Homepage';
-import Files from './components/Files';
 import Notifications from './components/Notification';
 import Chat from './components/Chat';
 import PersonalWork from './components/PersonalWork';
@@ -15,6 +14,8 @@ import CreateProfile from './components/CreateProfile';
 import PersonalTask from './components/PersonalTask';
 import About from './components/About';
 import Timeline from './components/Timeline';
+import SprintsPage from './components/SprintsPage';
+import CreateSprint from './components/CreateSprint';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -24,7 +25,6 @@ function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
   const [authToken, setAuthToken] = useState(localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(null);
-  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
   const fetchingRef = useRef(false);
@@ -45,17 +45,12 @@ function App() {
   }, []);
 
   const fetchUserProfile = useCallback(async (token) => {
-    if (!token) {
-      console.log("No token provided to fetchUserProfile.");
-      return { needsProfileCreation: false, error: false, user: null };
-    }
-    if (fetchingRef.current) {
+    if (!token || fetchingRef.current) {
+      console.log(token ? "fetchUserProfile already in progress, skipping." : "No token provided to fetchUserProfile.");
       return { needsProfileCreation: false, error: false, user: null };
     }
 
     fetchingRef.current = true;
-    setIsFetchingProfile(true);
-
     try {
       const response = await fetch('http://localhost:3000/api/user/me', {
         method: 'GET',
@@ -66,7 +61,7 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        if (data.message && data.message.includes('Không tìm thấy thông tin người dùng')) {
+        if (data.message?.includes('Không tìm thấy thông tin người dùng')) {
           setCurrentUser(null);
           return { needsProfileCreation: true, error: false, user: null };
         } else {
@@ -84,7 +79,6 @@ function App() {
       return { needsProfileCreation: false, error: true, user: null, message: error.message };
     } finally {
       fetchingRef.current = false;
-      setIsFetchingProfile(false);
     }
   }, []);
 
@@ -108,21 +102,6 @@ function App() {
         } else if (profileResult.error) {
           toast.error(profileResult.message || "Phiên đăng nhập không hợp lệ hoặc có lỗi. Vui lòng đăng nhập lại.");
           handleLogout();
-        } else if (profileResult.user) {
-          // REMOVED: The condition that caused immediate redirect to homepage
-          // const publicOrRootPages = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
-          // if (publicOrRootPages.some(publicPath => currentPage.startsWith(publicPath))) {
-          //   navigate('/homepage');
-          // }
-          // If the user is authenticated and on a public page, they will now remain there
-          // unless another specific condition forces a redirect (e.g., no profile).
-          // If you want to ensure authenticated users always go to homepage when opening the app,
-          // regardless of the initial URL, you might add:
-          // if (currentPage === '/' || currentPage === '/login' || currentPage === '/register') {
-          //   navigate('/homepage');
-          // }
-          // However, for allowing them to stay on about/timeline if they explicitly navigate there,
-          // the current removal is sufficient.
         }
       } else {
         const publicPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
@@ -139,9 +118,7 @@ function App() {
   const handleLoginSuccess = useCallback(async (token) => {
     localStorage.setItem('token', token);
     setAuthToken(token);
-
     toast.success("Đăng nhập thành công!");
-
     const profileResult = await fetchUserProfile(token);
     if (profileResult.needsProfileCreation) {
       toast.warn("Bạn chưa có hồ sơ. Vui lòng tạo hồ sơ.");
@@ -149,7 +126,7 @@ function App() {
     } else if (profileResult.error) {
       toast.error(profileResult.message || "Đăng nhập thành công nhưng không thể tải hồ sơ. Vui lòng thử lại.");
     } else {
-      navigate('/homepage'); // Keep this redirect after successful login
+      navigate('/homepage');
     }
   }, [fetchUserProfile, navigate]);
 
@@ -168,6 +145,8 @@ function App() {
 
   const renderCurrentPage = () => {
     const path = currentPage;
+    const publicPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
+    const isPublicPage = publicPages.some(publicPath => path.startsWith(publicPath));
 
     if (isInitializing) {
       return (
@@ -178,26 +157,36 @@ function App() {
       );
     }
 
-    const publicPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/about', '/timeline'];
-    const isPublicPage = publicPages.some(publicPath => path.startsWith(publicPath));
-
-    // If no auth token and not a public page, redirect to login
     if (!isPublicPage && !authToken) {
       navigate('/login');
       return null;
     }
 
-    // If authenticated and on login/register, redirect to homepage
     if ((path === '/login' || path === '/register') && authToken && currentUser) {
       navigate('/homepage');
       return null;
     }
 
-    // If authenticated but no user profile, redirect to create-profile (unless already there)
     if (authToken && !currentUser && !isPublicPage && path !== '/create-profile') {
         navigate('/create-profile');
         return null;
     }
+
+    const commonAuthProtectedPageCheck = () => {
+      if (!authToken) {
+        navigate('/login');
+        return true; // Indicates redirect happened
+      }
+      if (!currentUser) {
+          return (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+                  <CircularProgress />
+                  <p style={{ marginTop: '16px' }}>Đang tải thông tin người dùng...</p>
+              </div>
+          );
+      }
+      return false; // Indicates no redirect, proceed with rendering
+    };
 
     switch (true) {
       case path === '/login':
@@ -226,7 +215,10 @@ function App() {
           />
         );
       case path === '/profile':
-        return <Profile setCurrentPage={navigate} currentUser={currentUser} authToken={authToken} onProfileUpdate={fetchUserProfile} />;
+        const profileCheck = commonAuthProtectedPageCheck();
+        if (profileCheck === true) return null;
+        if (profileCheck !== false) return profileCheck; // Return loading component if currentUser is null
+        return <Profile setCurrentPage={navigate} currentUser={currentUser} authToken={authToken} onProfileUpdate={handleProfileCreatedOrUpdated} />;
       case path === '/create-profile':
         if (!authToken) {
             navigate('/login');
@@ -239,10 +231,20 @@ function App() {
             onProfileCreated={handleProfileCreatedOrUpdated}
           />
         );
+      case path === '/sprints':
+        const sprintsCheck = commonAuthProtectedPageCheck();
+        if (sprintsCheck === true) return null;
+        if (sprintsCheck !== false) return sprintsCheck;
+        return <SprintsPage authToken={authToken} currentUser={currentUser} setCurrentPage={navigate} />;
+      case path === '/create-sprint':
+        const createSprintCheck = commonAuthProtectedPageCheck();
+        if (createSprintCheck === true) return null;
+        if (createSprintCheck !== false) return createSprintCheck;
+        return <CreateSprint authToken={authToken} currentUser={currentUser} setCurrentPage={navigate} />;
       case path === '/personal-work':
         return <PersonalWork setCurrentPage={navigate} />;
       case path === '/personal-task':
-        return <PersonalTask setCurrentPage={navigate} />;
+        return <PersonalTask setCurrentPage={navigate} authToken={authToken} />;
       case path === '/notifications':
         return <Notifications setCurrentPage={navigate} />;
       case path === '/chat':
@@ -253,14 +255,12 @@ function App() {
         return <Timeline />;
       case path === '/homepage':
       case path === '/':
-        // If not authenticated or no user, redirect to login (handled by the general check above)
         if (!authToken || !currentUser) {
             navigate('/login');
             return null;
         }
         return <Homepage setCurrentPage={navigate} />;
       default:
-        // If an unknown path and authenticated, redirect to homepage
         if (authToken && currentUser) {
           navigate('/homepage');
           return null;

@@ -118,6 +118,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
         {renderNavLink('/homepage', 'Trang chủ')}
         {/* Only show profile link if logged in and has a profile */}
         {currentUser && currentUser.name && renderNavLink('/profile', 'Profile')}
+        {currentUser && currentUser.name && renderNavLink('/sprints', 'Xem sprint')} {/* New navigation link */}
         {renderNavLink('/personal-task', 'Lịch làm việc')}
         {renderNavLink('/timeline', 'Timeline')}
         {renderNavLink('/about', 'Về chúng tôi')}
