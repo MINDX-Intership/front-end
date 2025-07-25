@@ -2,11 +2,210 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     CircularProgress, Typography, Box, Paper, List, ListItem, ListItemText, Button,
     IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-    Chip, Grid
+    Chip, Grid, styled
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit'; // Added for future edit functionality
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import { toast } from 'react-toastify';
+
+const Root = styled(Box)({
+    minHeight: '100vh',
+    background: 'white',
+    padding: '24px',
+});
+
+const MainContainer = styled(Paper)({
+    maxWidth: '1000px',
+    margin: '0 auto',
+    borderRadius: '24px',
+    background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+    overflow: 'hidden',
+});
+
+const Header = styled(Box)({
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    padding: '48px 32px',
+    textAlign: 'center',
+    color: 'white',
+});
+
+const HeaderTitle = styled(Typography)({
+    fontSize: '2.5rem',
+    fontWeight: 700,
+    marginBottom: '16px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+});
+
+const HeaderSubtitle = styled(Typography)({
+    fontSize: '1.2rem',
+    opacity: 0.9,
+});
+
+const ContentContainer = styled(Box)({
+    padding: '32px',
+});
+
+const ActionBar = styled(Box)({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '32px',
+    gap: '16px',
+});
+
+const CreateButton = styled(Button)({
+    borderRadius: '12px',
+    padding: '12px 32px',
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    textTransform: 'none',
+    background: 'white',
+    boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+        background: 'white',
+        boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)',
+        transform: 'translateY(-2px)',
+    },
+});
+
+const SprintCard = styled(Paper)({
+    margin: '16px 0',
+    borderRadius: '16px',
+    background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    border: '1px solid rgba(102, 126, 234, 0.1)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+        boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+        transform: 'translateY(-2px)',
+        borderColor: 'rgba(102, 126, 234, 0.2)',
+    },
+});
+
+const SprintTitle = styled(Typography)({
+    fontSize: '1.4rem',
+    fontWeight: 700,
+    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    marginBottom: '8px',
+});
+
+const SprintDescription = styled(Typography)({
+    color: '#6c757d',
+    fontSize: '1rem',
+    lineHeight: 1.6,
+    marginBottom: '16px',
+});
+
+const DateInfo = styled(Typography)({
+    color: '#495057',
+    fontSize: '0.95rem',
+    fontWeight: 500,
+    marginBottom: '4px',
+});
+
+const StyledChip = styled(Chip)(({ status }) => ({
+    borderRadius: '20px',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    height: '32px',
+    ...(status === 'Hoàn thành' && {
+        background: 'linear-gradient(45deg, #28a745, #20c997)',
+        color: 'white',
+    }),
+    ...(status === 'Đang làm' && {
+        background: 'linear-gradient(45deg, #007bff, #6f42c1)',
+        color: 'white',
+    }),
+    ...(status === 'Chưa bắt đầu' && {
+        background: 'linear-gradient(45deg, #6c757d, #495057)',
+        color: 'white',
+    }),
+}));
+
+const ActionButtons = styled(Box)({
+    display: 'flex',
+    gap: '8px',
+});
+
+const ActionIconButton = styled(IconButton)(({ color }) => ({
+    borderRadius: '10px',
+    padding: '8px',
+    transition: 'all 0.3s ease',
+    ...(color === 'delete' && {
+        color: '#dc3545',
+        '&:hover': {
+            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+            transform: 'scale(1.1)',
+        },
+    }),
+    ...(color === 'edit' && {
+        color: '#667eea',
+        '&:hover': {
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            transform: 'scale(1.1)',
+        },
+    }),
+}));
+
+const EmptyState = styled(Paper)({
+    padding: '64px 32px',
+    textAlign: 'center',
+    borderRadius: '16px',
+    background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+    border: '2px dashed rgba(102, 126, 234, 0.3)',
+});
+
+const EmptyStateIcon = styled(Box)({
+    fontSize: '4rem',
+    marginBottom: '24px',
+    opacity: 0.5,
+});
+
+const LoadingContainer = styled(Box)({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+});
+
+const LoadingContent = styled(Box)({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '24px',
+    padding: '48px',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '24px',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+});
+
+const StyledDialog = styled(Dialog)({
+    '& .MuiDialog-paper': {
+        borderRadius: '16px',
+        padding: '8px',
+    },
+});
+
+const DialogButton = styled(Button)(({ variant }) => ({
+    borderRadius: '8px',
+    padding: '8px 24px',
+    fontWeight: 600,
+    textTransform: 'none',
+    ...(variant === 'delete' && {
+        background: 'linear-gradient(45deg, #dc3545, #c82333)',
+        color: 'white',
+        '&:hover': {
+            background: 'linear-gradient(45deg, #c82333, #a71e2a)',
+        },
+    }),
+}));
 
 const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
     const [sprints, setSprints] = useState([]);
@@ -19,7 +218,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
@@ -52,7 +251,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         } finally {
             setLoading(false);
         }
-    }, [authToken]); // Dependency on authToken to re-fetch if token changes
+    }, [authToken]);
 
     useEffect(() => {
         if (authToken) {
@@ -60,9 +259,9 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         } else {
             setLoading(false);
             setError('Không có token xác thực. Vui lòng đăng nhập lại.');
-            setCurrentPage('/login'); // Redirect to login if no token
+            setCurrentPage('/login');
         }
-    }, [authToken, setCurrentPage, fetchSprints]); // Added fetchSprints to dependencies
+    }, [authToken, setCurrentPage, fetchSprints]);
 
     // Handle delete dialog open
     const handleDeleteClick = (sprint) => {
@@ -93,7 +292,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
 
             if (response.ok) {
                 toast.success(data.message);
-                fetchSprints(); // Re-fetch sprints to update the list
+                fetchSprints();
             } else {
                 toast.error(data.message || 'Lỗi khi xóa sprint.');
             }
@@ -105,144 +304,198 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         }
     };
 
-    // Helper to get status chip color
-    const getStatusChipColor = (status) => {
-        switch (status) {
-            case 'Hoàn thành':
-                return 'success';
-            case 'Đang làm':
-                return 'info';
-            case 'Chưa bắt đầu':
-            default:
-                return 'default'; // Or 'warning' if you want a distinct color
-        }
-    };
-
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" height="80vh" flexDirection="column">
-                <CircularProgress />
-                <Typography variant="h6" sx={{ mt: 2 }}>Đang tải sprints...</Typography>
-            </Box>
+            <LoadingContainer>
+                <LoadingContent>
+                    <CircularProgress size={48} sx={{ color: '#667eea' }} />
+                    <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600 }}>
+                        Đang tải sprints...
+                    </Typography>
+                </LoadingContent>
+            </LoadingContainer>
         );
     }
 
     if (error) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" height="80vh" flexDirection="column">
-                <Typography color="error" variant="h6">{error}</Typography>
-                <Button variant="contained" onClick={fetchSprints} sx={{ mt: 2 }}>Thử lại</Button>
-            </Box>
+            <LoadingContainer>
+                <LoadingContent>
+                    <Typography color="error" variant="h6" sx={{ marginBottom: 3 }}>
+                        {error}
+                    </Typography>
+                    <CreateButton onClick={fetchSprints}>
+                        Thử lại
+                    </CreateButton>
+                </LoadingContent>
+            </LoadingContainer>
         );
     }
 
     return (
-        <Box sx={{ p: 3, maxWidth: 900, margin: 'auto' }}>
-            <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-                Quản lý Sprints của bạn
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => setCurrentPage('/create-sprint')}
-                >
-                    Tạo Sprint Mới
-                </Button>
-            </Box>
+        <Root>
+            <MainContainer elevation={0}>
+                <Header>
+                    <HeaderTitle variant="h3">
+                        Quản lý Sprints
+                    </HeaderTitle>
+                    <HeaderSubtitle variant="h6">
+                        Theo dõi và quản lý các sprint trong dự án của bạn
+                    </HeaderSubtitle>
+                </Header>
 
-            {sprints.length === 0 ? (
-                <Paper elevation={2} sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography variant="h6" color="text.secondary">
-                        Bạn chưa có sprint nào được tạo.
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                        Nhấn "Tạo Sprint Mới" để bắt đầu!
-                    </Typography>
-                </Paper>
-            ) : (
-                <Paper elevation={3} sx={{ p: 2 }}>
-                    <List>
-                        {sprints.map((sprint) => (
-                            <ListItem
-                                key={sprint._id}
-                                divider // Adds a divider between list items
-                                secondaryAction={
-                                    <Box>
-                                        {/* <IconButton edge="end" aria-label="edit" sx={{ mr: 1 }}
-                                            onClick={() => { /* TODO: Implement edit functionality */ /* }}
-                                        >
-                                            <EditIcon />
-                                        </IconButton> */}
-                                        <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(sprint)}>
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Box>
-                                }
+                <ContentContainer>
+                    <ActionBar>
+                        <Typography variant="h5" sx={{ 
+                            fontWeight: 600,
+                            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}>
+                            Danh sách Sprint ({sprints.length})
+                        </Typography>
+                        <CreateButton
+                            startIcon={<AddIcon />}
+                            onClick={() => setCurrentPage('/create-sprint')}
+                        >
+                            Tạo Sprint Mới
+                        </CreateButton>
+                    </ActionBar>
+
+                    {sprints.length === 0 ? (
+                        <EmptyState elevation={0}>
+                            <EmptyStateIcon>📋</EmptyStateIcon>
+                            <Typography variant="h5" sx={{ 
+                                fontWeight: 600, 
+                                marginBottom: 2,
+                                color: '#6c757d'
+                            }}>
+                                Chưa có sprint nào
+                            </Typography>
+                            <Typography variant="body1" sx={{ 
+                                color: '#6c757d',
+                                marginBottom: 3,
+                                fontSize: '1.1rem'
+                            }}>
+                                Bắt đầu bằng cách tạo sprint đầu tiên cho dự án của bạn
+                            </Typography>
+                            <CreateButton
+                                startIcon={<AddIcon />}
+                                onClick={() => setCurrentPage('/create-sprint')}
                             >
-                                <ListItemText
-                                    primary={
-                                        <Typography variant="h6" component="h2">
-                                            {sprint.title}
-                                        </Typography>
-                                    }
-                                    secondary={
-                                        <Grid container spacing={1} sx={{ mt: 1 }}>
-                                            <Grid item xs={12}>
-                                                <Typography component="span" variant="body2" color="text.primary">
-                                                    Mô tả: {sprint.description || 'Không có mô tả'}
-                                                </Typography>
+                                Tạo Sprint Đầu Tiên
+                            </CreateButton>
+                        </EmptyState>
+                    ) : (
+                        <Box>
+                            {sprints.map((sprint) => (
+                                <SprintCard key={sprint._id} elevation={0}>
+                                    <Box sx={{ padding: '24px' }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'flex-start',
+                                            marginBottom: '16px'
+                                        }}>
+                                            <Box sx={{ flex: 1 }}>
+                                                <SprintTitle>
+                                                    {sprint.title}
+                                                </SprintTitle>
+                                                <SprintDescription>
+                                                    {sprint.description || 'Không có mô tả'}
+                                                </SprintDescription>
+                                            </Box>
+                                            <ActionButtons>
+
+                                                <ActionIconButton 
+                                                    color="delete" 
+                                                    onClick={() => handleDeleteClick(sprint)}
+                                                >
+                                                    <DeleteIcon />
+                                                </ActionIconButton>
+                                            </ActionButtons>
+                                        </Box>
+
+                                        <Grid container spacing={2} sx={{ marginBottom: '16px' }}>
+                                            <Grid item xs={12} sm={6}>
+                                                <DateInfo>
+                                                    📅 Bắt đầu: {formatDate(sprint.startDate)}
+                                                </DateInfo>
                                             </Grid>
-                                            <Grid item xs={12}>
-                                                <Typography component="span" variant="body2" color="text.secondary">
-                                                    Ngày bắt đầu: {formatDate(sprint.startDate)}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12}>
-                                                <Typography component="span" variant="body2" color="text.secondary">
-                                                    Ngày kết thúc: {formatDate(sprint.endDate)}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12}>
-                                                <Chip
-                                                    label={sprint.status}
-                                                    color={getStatusChipColor(sprint.status)}
-                                                    size="small"
-                                                    sx={{ mt: 1 }}
-                                                />
+                                            <Grid item xs={12} sm={6}>
+                                                <DateInfo>
+                                                    🏁 Kết thúc: {formatDate(sprint.endDate)}
+                                                </DateInfo>
                                             </Grid>
                                         </Grid>
-                                    }
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Paper>
-            )}
+
+                                        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                            <StyledChip
+                                                label={sprint.status}
+                                                status={sprint.status}
+                                                size="medium"
+                                            />
+                                        </Box>
+                                    </Box>
+                                </SprintCard>
+                            ))}
+                        </Box>
+                    )}
+                </ContentContainer>
+            </MainContainer>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog
+            <StyledDialog
                 open={openDeleteDialog}
                 onClose={handleCloseDeleteDialog}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
+                maxWidth="sm"
+                fullWidth
             >
-                <DialogTitle id="alert-dialog-title">{"Xác nhận xóa Sprint"}</DialogTitle>
+                <DialogTitle sx={{ 
+                    fontSize: '1.3rem', 
+                    fontWeight: 600,
+                    color: '#dc3545'
+                }}>
+                    ⚠️ Xác nhận xóa Sprint
+                </DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Bạn có chắc chắn muốn xóa sprint "
-                        <Typography component="span" fontWeight="bold">{sprintToDelete?.title}</Typography>
-                        " không? Hành động này không thể hoàn tác.
+                    <DialogContentText sx={{ fontSize: '1.1rem', color: '#495057' }}>
+                        Bạn có chắc chắn muốn xóa sprint{' '}
+                        <Typography component="span" sx={{ 
+                            fontWeight: 700,
+                            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}>
+                            "{sprintToDelete?.title}"
+                        </Typography>
+                        {' '}không? Hành động này không thể hoàn tác.
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDeleteDialog}>Hủy</Button>
-                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                        Xóa
+                <DialogActions sx={{ padding: '16px 24px' }}>
+                    <Button 
+                        onClick={handleCloseDeleteDialog}
+                        sx={{ 
+                            borderRadius: '8px',
+                            padding: '8px 24px',
+                            fontWeight: 600,
+                            textTransform: 'none'
+                        }}
+                    >
+                        Hủy
                     </Button>
+                    <DialogButton 
+                        variant="delete"
+                        onClick={handleConfirmDelete} 
+                        autoFocus
+                    >
+                        Xóa Sprint
+                    </DialogButton>
                 </DialogActions>
-            </Dialog>
-        </Box>
+            </StyledDialog>
+        </Root>
     );
 };
 

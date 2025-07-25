@@ -78,6 +78,18 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
     event.preventDefault();
     setLoading(true);
 
+    // Build payload and log for debugging
+    const payload = {
+      personalEmail,
+      companyEmail: "",
+      name,
+      phoneNumber,
+      dob,
+      departs: [],
+      jobPosition: [jobPosition],
+    };
+    console.log('Creating profile with payload:', payload);
+
     try {
       const response = await fetch('http://localhost:3000/api/user/create-profile', {
         method: 'POST',
@@ -85,13 +97,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({
-          personalEmail,
-          name,
-          phoneNumber,
-          dob,
-          jobPosition,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

@@ -205,6 +205,7 @@ function PersonalTask({ authToken, setCurrentPage }) {
             variant="outlined"
             value={taskTitle}
             onChange={(e) => setTaskTitle(e.target.value)}
+            
             sx={{ mb: 2 }}
           />
           <TextField

@@ -1,5 +1,5 @@
-// Navbar.jsx
 import React, { useState, useEffect } from 'react';
+import { Search, Bell, MessageCircle } from 'lucide-react'; // Lucide icons
 
 function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,7 +20,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
   const handleNavLinkClick = (e, path) => {
     e.preventDefault();
     setCurrentPage(path);
-    setShowDropdown(false); // Close dropdown on navigation
+    setShowDropdown(false);
   };
 
   const handleSearchChange = (e) => {
@@ -34,7 +34,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    onLogout(); // Call the logout handler from App.jsx
+    onLogout();
     setShowDropdown(false);
   };
 
@@ -82,7 +82,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
     </li>
   );
 
-  // Get initials for avatar
   const getInitials = (name) => {
     if (!name) return 'User';
     const parts = name.split(' ');
@@ -91,7 +90,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
     }
     return name.charAt(0).toUpperCase();
   };
-
 
   return (
     <nav style={{
@@ -116,16 +114,15 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
         gap: '30px',
       }}>
         {renderNavLink('/homepage', 'Trang chủ')}
-        {/* Only show profile link if logged in and has a profile */}
         {currentUser && currentUser.name && renderNavLink('/profile', 'Profile')}
-        {currentUser && currentUser.name && renderNavLink('/sprints', 'Xem sprint')} {/* New navigation link */}
+        {currentUser && currentUser.name && renderNavLink('/sprints', 'Xem sprint')}
         {renderNavLink('/personal-task', 'Lịch làm việc')}
         {renderNavLink('/timeline', 'Timeline')}
         {renderNavLink('/about', 'Về chúng tôi')}
       </ul>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        {/* thanh search */}
+        {/* Search */}
         <div style={{ position: 'relative' }}>
           <input
             type="text"
@@ -144,60 +141,34 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
             onFocus={(e) => e.target.style.borderColor = '#007bff'}
             onBlur={(e) => e.target.style.borderColor = '#ccc'}
           />
-          <span style={{
+          <Search size={16} style={{
             position: 'absolute',
             left: '12px',
             top: '50%',
             transform: 'translateY(-50%)',
             color: '#888',
-          }}>
-            🔍
-          </span>
+          }} />
         </div>
 
         {currentUser && currentUser.name ? (
           <>
-            {/* Notification Icon */}
+            {/* Notifications */}
             <div
-              style={{
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#555',
-                position: 'relative',
-              }}
+              style={{ fontSize: '24px', cursor: 'pointer', color: '#555', position: 'relative' }}
               onClick={handleNotificationClick}
             >
-              🔔
-              <span style={{
-                position: 'absolute',
-                top: '-5px',
-                right: '-5px',
-                backgroundColor: 'red',
-                color: 'white',
-                borderRadius: '50%',
-                padding: '2px 6px',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                display: 'none',
-              }}>
-                3
-              </span>
+              <Bell />
             </div>
 
-            {/* Chat Icon */}
+            {/* Chat */}
             <div
-              style={{
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#555',
-                position: 'relative',
-              }}
+              style={{ fontSize: '24px', cursor: 'pointer', color: '#555', position: 'relative' }}
               onClick={handleChatClick}
             >
-              💬
+              <MessageCircle />
             </div>
 
-            {/* Avatar with Dropdown for logged-in user */}
+            {/* Avatar Dropdown */}
             <div style={{ position: 'relative' }} className="avatar-dropdown-container">
               <div
                 style={{

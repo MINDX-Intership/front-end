@@ -72,92 +72,226 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
     };
 
     return (
-        <Box sx={{ p: 3, maxWidth: 600, margin: 'auto' }}>
-            <Paper elevation={3} sx={{ p: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-                    Tạo Sprint Mới
-                </Typography>
+        <Box 
+            sx={{ 
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 3
+            }}
+        >
+            <Paper 
+                elevation={8} 
+                sx={{ 
+                    p: { xs: 3, sm: 5 },
+                    maxWidth: 650,
+                    width: '100%',
+                    borderRadius: 3,
+                    background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                }}
+            >
+                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <Typography 
+                        variant="h3" 
+                        component="h1" 
+                        sx={{ 
+                            fontWeight: 700,
+                            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            mb: 1
+                        }}
+                    >
+                        Tạo Sprint Mới
+                    </Typography>
+                    <Typography 
+                        variant="body1" 
+                        color="text.secondary"
+                        sx={{ fontSize: '1.1rem' }}
+                    >
+                        Điền thông tin để tạo sprint cho dự án của bạn
+                    </Typography>
+                </Box>
+
                 <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Tiêu đề Sprint"
-                                variant="outlined"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                required
-                            />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {/* Title Field */}
+                        <TextField
+                            fullWidth
+                            label="Tiêu đề Sprint"
+                            variant="outlined"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    '&:hover fieldset': {
+                                        borderColor: '#667eea',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#667eea',
+                                    },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#667eea',
+                                },
+                            }}
+                        />
+
+                        {/* Description Field */}
+                        <TextField
+                            fullWidth
+                            label="Mô tả Sprint"
+                            variant="outlined"
+                            multiline
+                            rows={4}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Mô tả chi tiết về mục tiêu và phạm vi của sprint..."
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    '&:hover fieldset': {
+                                        borderColor: '#667eea',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#667eea',
+                                    },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#667eea',
+                                },
+                            }}
+                        />
+
+                        {/* Date Fields in Grid */}
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Ngày bắt đầu"
+                                    type="date"
+                                    variant="outlined"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    required
+                                    inputProps={{
+                                        min: getTodayDateString(),
+                                    }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            '&:hover fieldset': {
+                                                borderColor: '#667eea',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#667eea',
+                                            },
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#667eea',
+                                        },
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Ngày kết thúc"
+                                    type="date"
+                                    variant="outlined"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    required
+                                    inputProps={{
+                                        min: startDate || getTodayDateString(),
+                                    }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            '&:hover fieldset': {
+                                                borderColor: '#667eea',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#667eea',
+                                            },
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#667eea',
+                                        },
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Mô tả Sprint"
-                                variant="outlined"
-                                multiline
-                                rows={4}
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Ngày bắt đầu"
-                                type="date"
-                                variant="outlined"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                                required
-                                inputProps={{
-                                    min: getTodayDateString(), // Prevent selecting past dates
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Ngày kết thúc"
-                                type="date"
-                                variant="outlined"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                                required
-                                inputProps={{
-                                    min: startDate || getTodayDateString(), // End date must be after or same as start date
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
+
+                        {/* Action Buttons */}
+                        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                             <Button
                                 type="submit"
                                 variant="contained"
-                                color="primary"
-                                fullWidth
                                 disabled={loading}
-                                sx={{ mt: 2, py: 1.5 }}
+                                sx={{
+                                    flex: 1,
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                    boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+                                    '&:hover': {
+                                        background: 'linear-gradient(45deg, #5a6fd8, #6a4190)',
+                                        boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)',
+                                        transform: 'translateY(-2px)',
+                                    },
+                                    '&:disabled': {
+                                        background: 'linear-gradient(45deg, #ccc, #999)',
+                                    },
+                                    transition: 'all 0.3s ease',
+                                }}
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Tạo Sprint'}
+                                {loading ? (
+                                    <CircularProgress size={24} sx={{ color: 'white' }} />
+                                ) : (
+                                    'Tạo Sprint'
+                                )}
                             </Button>
-                        </Grid>
-                        <Grid item xs={12}>
+
                             <Button
                                 variant="outlined"
-                                color="secondary"
-                                fullWidth
                                 onClick={() => setCurrentPage('/sprints')}
-                                sx={{ mt: 1 }}
+                                sx={{
+                                    flex: 1,
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    borderColor: '#667eea',
+                                    color: '#667eea',
+                                    borderWidth: 2,
+                                    '&:hover': {
+                                        borderColor: '#5a6fd8',
+                                        backgroundColor: 'rgba(102, 126, 234, 0.04)',
+                                        borderWidth: 2,
+                                        transform: 'translateY(-2px)',
+                                    },
+                                    transition: 'all 0.3s ease',
+                                }}
                             >
                                 Hủy
                             </Button>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
                 </form>
             </Paper>
         </Box>
