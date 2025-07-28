@@ -1,0 +1,140 @@
+.supportRequestContainer {
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+  color: #000;
+}
+
+/* Tiêu đề */
+.supportTitle {
+  color: #222;
+  font-weight: 700;
+}
+
+/* Danh sách yêu cầu */
+.requestList {
+  margin-top: 16px;
+}
+
+.requestCard {
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.09) 0 2px 8px 0;
+  background-color: #fff;
+  position: relative;
+  transition: box-shadow 0.18s;
+  color: #000;
+  border-left: 8px solid transparent;
+  padding-left: 28px;
+}
+
+.requestCard:hover {
+  box-shadow: rgba(0, 0, 0, 0.16) 0 3px 14px 0;
+}
+
+/* Header chứa mã và nút xóa */
+.requestHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.requestCode {
+  font-weight: 700;
+  color: #111;
+  font-size: 1rem;
+}
+
+/* Tiêu đề yêu cầu */
+.requestTitle {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Mô tả */
+.requestDescription {
+  color: #444;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+/* Trạng thái chữ */
+.requestStatus {
+  font-style: italic;
+  font-size: 0.92rem;
+  color: #555;
+}
+
+/* Viền trạng thái */
+.status-new {
+  border-left: 8px solid #dadada;
+}
+.status-in_progress {
+  border-left: 8px solid #b0b0b0;
+}
+.status-resolved {
+  border-left: 8px solid #868686;
+}
+
+/* Hộp trống thông báo */
+.emptyListBox {
+  padding: 60px 20px;
+  margin-top: 24px;
+  text-align: center;
+  color: #888;
+  border: 2px dashed #bbb;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+/* Nút xóa icon */
+.MuiIconButton-root {
+  color: #333;
+  padding: 6px;
+}
+
+.MuiIconButton-root:hover {
+  color: #000;
+}
+
+/* Nút gửi yêu cầu - dạng chứa nền */
+.MuiButton-contained {
+  background-color: #000 !important;
+  color: #fff !important;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 6px;
+}
+
+.MuiButton-contained:hover {
+  background-color: #222 !important;
+}
+
+/* Nút Hủy (text button) */
+.MuiButton-text {
+  color: #555 !important;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.MuiButton-text:hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Form Dialog content padding */
+.MuiDialogContent-root {
+  padding-top: 16px !important;
+}
+
+/* Form control spacing */
+.MuiFormControl-root {
+  margin-bottom: 12px;
+}
+
+/* Responsive mobile fix */
+@media (max-width: 600px) {
+  .requestCard {
+    padding: 16px 10px 16px 16px;
+  }
+}

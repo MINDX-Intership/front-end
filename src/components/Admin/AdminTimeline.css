@@ -1,0 +1,212 @@
+.admin-timeline-root {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  min-height: 100vh;
+  background: #f6f7fb;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tab-container {
+  margin-bottom: 28px;
+}
+
+.simple-tabs {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  max-width: 400px;
+  margin: 0 auto;
+  min-height: 48px;
+}
+
+.simple-tabs .MuiTab-root {
+  min-width: 140px;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+  padding: 12px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.simple-tabs .MuiTab-root.Mui-selected,
+.simple-tabs .MuiTab-root.tab-selected {
+  color: #1976d2;
+  border-bottom: 2px solid #1976d2;
+}
+
+.simple-tabs .MuiTab-root:hover {
+  background: #f0f0f0;
+}
+
+.simple-tabs .MuiTabs-indicator {
+  display: none;
+}
+
+.cards-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+}
+
+.custom-card {
+  width: 1150px;
+  max-width: 95vw;
+  height: 500px;
+  border-radius: 18px;
+  padding: 32px 40px;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #2d3142;
+}
+
+.divider {
+  border-color: #e3e7ef;
+}
+
+.gantt-title-row,
+.calendar-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gantt-date-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gantt-date {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+.gantt-dates {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.gantt-date-label {
+  flex: 1;
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.calendar-btn {
+  background: transparent !important;
+  color: #1976d2 !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+
+.calendar-btn:hover {
+  background: #e3f2fd !important;
+  border-color: #90caf9 !important;
+}
+
+.empty-state {
+  min-height: 130px;
+  padding: 36px 0;
+  border-radius: 16px;
+  background: #f9fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a92a6;
+  gap: 10px;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+  opacity: 0.35;
+  color: #1976d2;
+  user-select: none;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2e3c62;
+  margin-bottom: 4px;
+  user-select: none;
+}
+
+.empty-state-caption {
+  font-size: 14px;
+  color: #8a92a6;
+  font-style: italic;
+}
+
+.analysis-paper {
+  margin-top: 18px;
+  height: auto; 
+}
+
+.analysis-stat-box {
+  text-align: center;
+}
+
+.stat-title {
+  font-size: 1.1rem;
+  color: #4a5174;
+  font-weight: 700;
+}
+
+.stat-value {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #1565c0;
+  margin-top: 6px;
+}
+@media (max-width: 1200px) {
+  .custom-card {
+    width: 95vw;
+    height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .simple-tabs .MuiTab-root {
+    min-width: 130px;
+    font-size: 14px;
+    padding: 8px 6px;
+  }
+  .card-title {
+    font-size: 1.2rem;
+  }
+  .stat-title {
+    font-size: 1rem;
+  }
+  .stat-value {
+    font-size: 2rem;
+  }
+}

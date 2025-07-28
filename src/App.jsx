@@ -16,6 +16,11 @@ import About from './components/About';
 import Timeline from './components/Task/Timeline';
 import SprintsPage from './components/Sprint/SprintsPage';
 import CreateSprint from './components/Sprint/CreateSprint';
+import Admin from './components/Admin/Admin';
+import AdminReport from './components/Admin/AdminReport';
+import AdminTimeline from './components/Admin/AdminTimeline';
+import MeetingSchedule from './components/MeetingSchedule';
+import SupportRequest from './components/SupportRequest';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -185,7 +190,7 @@ function App() {
               </div>
           );
       }
-      return false; // Indicates no redirect, proceed with rendering
+      return false;
     };
 
     switch (true) {

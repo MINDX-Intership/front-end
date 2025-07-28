@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Button,
   TextField,
@@ -13,6 +13,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { toast } from 'react-toastify';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+// MUI Date Picker
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/vi';
 
 const FormContainer = styled(Box)(() => ({
   marginTop: '64px',
@@ -22,19 +29,30 @@ const FormContainer = styled(Box)(() => ({
   backgroundColor: '#ffffff',
   padding: '32px',
   borderRadius: '8px',
-  boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
+  boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
 }));
 
-const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
-  const [personalEmail, setPersonalEmail] = useState('');
-  const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [dob, setDob] = useState('');
-  const [jobPosition, setJobPosition] = useState('');
-  const [availableJobPositions, setAvailableJobPositions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [fetchingJobPositions, setFetchingJobPositions] = useState(false);
+// Define Yup validation schema
+const validationSchema = Yup.object({
+  personalEmail: Yup.string()
+    .email('Email không hợp lệ')
+    .required('Email cá nhân là bắt buộc'),
+  name: Yup.string()
+    .min(2, 'Họ và tên phải có ít nhất 2 ký tự')
+    .required('Họ và tên là bắt buộc'),
+  phoneNumber: Yup.string()
+    .matches(/^\+?[0-9]{7,15}$/, 'Số điện thoại không hợp lệ')
+    .required('Số điện thoại là bắt buộc'),
+  dob: Yup.date()
+    .max(new Date(), 'Ngày sinh không thể nằm trong tương lai')
+    .required('Ngày sinh là bắt buộc'),
+  jobPosition: Yup.string()
+    .required('Vui lòng chọn chức vụ'),
+});
 
+const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
+  const [availableJobPositions, setAvailableJobPositions] = React.useState([]);
+  const [fetchingJobPositions, setFetchingJobPositions] = React.useState(false);
   const fetchingJobPositionsRef = useRef(false);
 
   useEffect(() => {
@@ -42,79 +60,74 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
       if (fetchingJobPositionsRef.current) return;
       fetchingJobPositionsRef.current = true;
       setFetchingJobPositions(true);
-
       try {
-        const response = await fetch('http://localhost:3000/api/job-position/all', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
+        const res = await fetch('http://localhost:3000/api/job-position/all', {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         });
-        const data = await response.json();
-        if (response.ok) {
-          setAvailableJobPositions(data.jobPositions);
-        } else {
-          toast.error(data.message || "Lỗi khi tải danh sách chức vụ.");
-        }
+        const data = await res.json();
+        if (res.ok) setAvailableJobPositions(data.jobPositions);
+        else toast.error(data.message || 'Lỗi khi tải danh sách chức vụ.');
       } catch (error) {
-        console.error("Fetch job positions error:", error);
-        toast.error("Lỗi mạng hoặc lỗi không mong muốn khi tải chức vụ.");
+        console.error('Fetch job positions error:', error);
+        toast.error('Lỗi mạng khi tải danh sách chức vụ.');
       } finally {
-        fetchingJobPositionsRef.current = false;
         setFetchingJobPositions(false);
+        fetchingJobPositionsRef.current = false;
       }
     };
 
-    if (authToken) {
-      fetchJobPositions();
-    } else {
-      toast.error("Không có token xác thực. Vui lòng đăng nhập lại.");
+    if (!authToken) {
+      toast.error('Không có token xác thực. Vui lòng đăng nhập lại.');
       setCurrentPage('/login');
+    } else {
+      fetchJobPositions();
     }
   }, [authToken, setCurrentPage]);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+  const formik = useFormik({
+    initialValues: {
+      personalEmail: '',
+      name: '',
+      phoneNumber: '',
+      dob: null,
+      jobPosition: '',
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      // Adjust payload to match backend expectations
+      const payload = {
+        personalEmail: values.personalEmail,
+        companyEmail: values.personalEmail, // set companyEmail same as personal if required
+        name: values.name,
+        phoneNumber: values.phoneNumber,
+        dob: values.dob.format('YYYY-MM-DD'),
+        departs: [],
+        jobPosition: values.jobPosition, // send as string
+      };
+      console.log('Creating profile payload:', payload);
 
-    // Build payload and log for debugging
-    const payload = {
-      personalEmail,
-      companyEmail: "",
-      name,
-      phoneNumber,
-      dob,
-      departs: [],
-      jobPosition: [jobPosition],
-    };
-    console.log('Creating profile with payload:', payload);
-
-    try {
-      const response = await fetch('http://localhost:3000/api/user/create-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.message || 'Hồ sơ đã được tạo thành công!');
-        onProfileCreated();
-      } else {
-        toast.error(data.message || 'Tạo hồ sơ thất bại.');
+      try {
+        const res = await fetch('http://localhost:3000/api/user/create-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success(data.message || 'Hồ sơ đã được tạo thành công!');
+          onProfileCreated();
+        } else {
+          console.error('Create profile error response:', data);
+          toast.error(data.message || 'Tạo hồ sơ thất bại với lỗi phía server.');
+        }
+      } catch (error) {
+        console.error('Lỗi khi tạo hồ sơ:', error);
+        toast.error('Lỗi mạng hoặc không mong muốn khi tạo hồ sơ.');
+      } finally {
+        setSubmitting(false);
       }
-    } catch (error) {
-      console.error('Lỗi khi tạo hồ sơ:', error);
-      toast.error('Lỗi mạng hoặc lỗi không mong muốn khi tạo hồ sơ.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   if (fetchingJobPositions) {
     return (
@@ -135,83 +148,95 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
         <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
           Tạo Hồ Sơ Người Dùng
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="personalEmail"
-            label="Email Cá Nhân"
-            name="personalEmail"
-            autoComplete="email"
-            value={personalEmail}
-            onChange={(e) => setPersonalEmail(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="name"
-            label="Họ và Tên"
-            name="name"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="phoneNumber"
-            label="Số Điện Thoại"
-            name="phoneNumber"
-            autoComplete="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="dob"
-            label="Ngày Sinh"
-            name="dob"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            inputProps={{
-              min: "1900-01-01",
-              max: new Date().toISOString().split("T")[0],
-            }}
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-          />
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel id="job-position-label">Chức vụ</InputLabel>
-            <Select
-              labelId="job-position-label"
-              id="jobPosition"
-              value={jobPosition}
-              label="Chức vụ"
-              onChange={(e) => setJobPosition(e.target.value)}
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="vi">
+          <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
+            <TextField
+              fullWidth
+              id="personalEmail"
+              name="personalEmail"
+              label="Email Cá Nhân"
+              value={formik.values.personalEmail}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.personalEmail && Boolean(formik.errors.personalEmail)}
+              helperText={formik.touched.personalEmail && formik.errors.personalEmail}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              id="name"
+              name="name"
+              label="Họ và Tên"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.name && Boolean(formik.errors.name)}
+              helperText={formik.touched.name && formik.errors.name}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              id="phoneNumber"
+              name="phoneNumber"
+              label="Số Điện Thoại"
+              value={formik.values.phoneNumber}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.phoneNumber && Boolean(formik.errors.phoneNumber)}
+              helperText={formik.touched.phoneNumber && formik.errors.phoneNumber}
+              margin="normal"
+            />
+            <DatePicker
+              label="Ngày Sinh"
+              value={formik.values.dob}
+              onChange={(newValue) => formik.setFieldValue('dob', newValue)}
+              inputFormat="DD/MM/YYYY"
+              mask="__/__/____"
+              sx={{ width: '100%', mt: 2 }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  margin="normal"
+                  error={formik.touched.dob && Boolean(formik.errors.dob)}
+                  helperText={formik.touched.dob && formik.errors.dob}
+                />
+              )}
+            />
+            <FormControl fullWidth margin="normal" error={formik.touched.jobPosition && Boolean(formik.errors.jobPosition)}>
+              <InputLabel id="jobPosition-label">Chức vụ</InputLabel>
+              <Select
+                labelId="jobPosition-label"
+                id="jobPosition"
+                name="jobPosition"
+                value={formik.values.jobPosition}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                label="Chức vụ"
+              >
+                <MenuItem value=""><em>Chọn chức vụ</em></MenuItem>
+                {availableJobPositions.map((position) => (
+                  <MenuItem key={position._id} value={position._id}>
+                    {position.title}
+                  </MenuItem>
+                ))}
+              </Select>
+              {formik.touched.jobPosition && formik.errors.jobPosition && (
+                <Typography variant="caption" color="error">
+                  {formik.errors.jobPosition}
+                </Typography>
+              )}
+            </FormControl>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 10, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}
+              disabled={formik.isSubmitting}
             >
-              <MenuItem value=""><em>Chọn chức vụ</em></MenuItem>
-              {availableJobPositions.map((position) => (
-                <MenuItem key={position._id} value={position._id}>
-                  {position.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 10, bgcolor: '#4a90e2', '&:hover': { bgcolor: '#357abd' } }}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Tạo Hồ Sơ'}
-          </Button>
-        </Box>
+              {formik.isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Tạo Hồ Sơ'}
+            </Button>
+          </Box>
+        </LocalizationProvider>
       </FormContainer>
     </Container>
   );

@@ -280,7 +280,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         if (!sprintToDelete) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/sprint/delete/${sprintToDelete._id}`, {
+            const response = await fetch(`http://localhost:3000/api/sprint/${sprintToDelete._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
