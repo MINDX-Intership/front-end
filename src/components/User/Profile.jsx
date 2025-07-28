@@ -273,7 +273,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/user/me", {
+      const response = await fetch("http://localhost:3000/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

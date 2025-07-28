@@ -61,7 +61,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
       fetchingJobPositionsRef.current = true;
       setFetchingJobPositions(true);
       try {
-        const res = await fetch('http://localhost:3000/api/job-position/all', {
+        const res = await fetch('http://localhost:3000/api/job-positions/all', {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         });
         const data = await res.json();
@@ -107,7 +107,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
       console.log('Creating profile payload:', payload);
 
       try {
-        const res = await fetch('http://localhost:3000/api/user/create-profile', {
+        const res = await fetch('http://localhost:3000/api/users/create-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
           body: JSON.stringify(payload),

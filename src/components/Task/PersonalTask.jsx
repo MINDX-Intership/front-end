@@ -1,4 +1,3 @@
-// PersonalTask.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
@@ -18,14 +17,18 @@ import {
 import { AddCircleOutline as AddCircleOutlineIcon } from "@mui/icons-material";
 
 const API_BASE_URL = "http://localhost:3000/api";
+const LOADING_DELAY_MS = 2000; // 2-second delay
 
-function PersonalTask({ authToken, setCurrentPage }) {
+function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
   const [openForm, setOpenForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [selectedSprintId, setSelectedSprintId] = useState("");
+  const [selectedDepartId, setSelectedDepartId] = useState("");
   const [sprints, setSprints] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loadingSprints, setLoadingSprints] = useState(true);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [loadingTaskCreation, setLoadingTaskCreation] = useState(false);
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({
@@ -45,6 +48,10 @@ function PersonalTask({ authToken, setCurrentPage }) {
     setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
+  // --- Utility for adding delay ---
+  const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+  // --- Fetch Sprints ---
   const fetchSprints = useCallback(async () => {
     if (!authToken) {
       showSnackbar("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.", "error");
@@ -56,64 +63,119 @@ function PersonalTask({ authToken, setCurrentPage }) {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/sprint/all`, {
+      const response = await fetch(`${API_BASE_URL}/sprints/all`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!response.ok) throw new Error("Không thể tải danh sách sprint");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Không thể tải danh sách sprint");
+      }
 
       const data = await response.json();
-      const sprintArray = data.sprints;
+      const sprintArray = data.sprints; // Assuming 'sprints' is the key for sprint data
       if (Array.isArray(sprintArray)) {
         setSprints(sprintArray);
         setSelectedSprintId(sprintArray[0]?._id || "");
       } else {
-        showSnackbar("Dữ liệu trả về không hợp lệ.", "error");
+        showSnackbar("Dữ liệu sprint trả về không hợp lệ.", "error");
         setSprints([]);
         setSelectedSprintId("");
       }
     } catch (err) {
       console.error("Lỗi khi tải danh sách sprint:", err);
       setError(err);
-      showSnackbar("Lỗi khi tải danh sách sprint. Vui lòng thử lại.", "error");
+      showSnackbar(`Lỗi khi tải danh sách sprint: ${err.message}`, "error");
     } finally {
+      // Delay before setting loading to false
+      await delay(LOADING_DELAY_MS);
       setLoadingSprints(false);
     }
   }, [authToken, showSnackbar]);
 
+  // --- Fetch Departments ---
+  const fetchDepartments = useCallback(async () => {
+    if (!authToken) {
+      showSnackbar("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.", "error");
+      setLoadingDepartments(false);
+      return;
+    }
+
+    setLoadingDepartments(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/departs/all`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Không thể tải danh sách phòng ban");
+      }
+
+      const responseData = await response.json(); // Use a different variable name to avoid confusion
+      // --- IMPORTANT CHANGE HERE: Accessing 'data' field ---
+      const departmentArray = responseData.data; // Now correctly accessing the 'data' array
+      if (Array.isArray(departmentArray)) {
+        setDepartments(departmentArray);
+        setSelectedDepartId(departmentArray[0]?._id || "");
+      } else {
+        showSnackbar("Dữ liệu phòng ban trả về không hợp lệ.", "error");
+        setDepartments([]);
+        setSelectedDepartId("");
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách phòng ban:", err);
+      setError(err);
+      showSnackbar(`Lỗi khi tải danh sách phòng ban: ${err.message}`, "error");
+    } finally {
+      // Delay before setting loading to false
+      await delay(LOADING_DELAY_MS);
+      setLoadingDepartments(false);
+    }
+  }, [authToken, showSnackbar]);
+
+  // Fetch data on component mount
   useEffect(() => {
     fetchSprints();
-  }, [fetchSprints]);
+    fetchDepartments();
+  }, [fetchSprints, fetchDepartments]);
 
   const handleOpenForm = () => setOpenForm(true);
   const handleCloseForm = () => {
     setOpenForm(false);
+    // Reset form fields
     setTaskTitle("");
     setTaskDescription("");
     setSelectedSprintId(sprints[0]?._id || "");
+    setSelectedDepartId(departments[0]?._id || "");
   };
 
   const handleCreateTask = async () => {
-    if (!taskTitle || !selectedSprintId) {
-      showSnackbar("Vui lòng điền Tiêu đề và chọn Sprint.", "warning");
+    if (!taskTitle || !selectedSprintId || !selectedDepartId) {
+      showSnackbar("Vui lòng điền Tiêu đề, chọn Sprint và Phòng ban.", "warning");
       return;
+    }
+    if (!currentUserId) {
+        showSnackbar("Không thể tạo task: Thông tin người dùng không có sẵn. Vui lòng đăng nhập lại.", "error");
+        return;
     }
 
     setLoadingTaskCreation(true);
     try {
       const response = await fetch(
-        `${API_BASE_URL}/task/sprint/${selectedSprintId}/add`,
+        `${API_BASE_URL}/tasks/create`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-          // chỉ gửi đúng những field backend cần
           body: JSON.stringify({
+            departId: selectedDepartId,
+            createdBy: currentUserId,
+            assignees: [currentUserId], // User creates task for themselves
             title: taskTitle,
             description: taskDescription,
-            // priority & dueDate nếu có, backend dùng default nếu không gửi
-            // assignedTo: bỏ, backend tự gán creator
           }),
         }
       );
@@ -136,7 +198,8 @@ function PersonalTask({ authToken, setCurrentPage }) {
     }
   };
 
-  if (loadingSprints) {
+  // Combine loading states for initial render
+  if (loadingSprints || loadingDepartments) {
     return (
       <Box
         sx={{
@@ -152,12 +215,13 @@ function PersonalTask({ authToken, setCurrentPage }) {
           variant="h6"
           sx={{ mt: 2, color: theme.palette.text.secondary }}
         >
-          Đang tải danh sách Sprint...
+          Đang tải dữ liệu...
         </Typography>
       </Box>
     );
   }
 
+  // Handle errors for either fetch operation after initial load attempt
   if (error) {
     return (
       <Box
@@ -170,9 +234,9 @@ function PersonalTask({ authToken, setCurrentPage }) {
         }}
       >
         <Typography variant="h6" color="error" sx={{ mb: 1 }}>
-          Đã xảy ra lỗi khi tải sprint: {error.message || "Lỗi không xác định"}
+          Đã xảy ra lỗi: {error.message || "Lỗi không xác định"}
         </Typography>
-        <Button variant="contained" onClick={fetchSprints} sx={{ mt: 2 }}>
+        <Button variant="contained" onClick={() => { fetchSprints(); fetchDepartments(); }} sx={{ mt: 2 }}>
           Thử lại
         </Button>
       </Box>
@@ -219,23 +283,38 @@ function PersonalTask({ authToken, setCurrentPage }) {
             fullWidth
             value={taskTitle}
             onChange={(e) => setTaskTitle(e.target.value)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, mt: 2 }}
+            required
           />
           <TextField
-            label="Mô tả Task"
+            select
+            label="Chọn Phòng ban"
             fullWidth
-            multiline
-            rows={4}
-            value={taskDescription}
-            onChange={(e) => setTaskDescription(e.target.value)}
+            value={selectedDepartId}
+            onChange={(e) => setSelectedDepartId(e.target.value)}
             sx={{ mb: 2 }}
-          />
+            required
+            disabled={departments.length === 0}
+          >
+            {departments.length === 0 ? (
+              <MenuItem value="">Không có Phòng ban nào khả dụng</MenuItem>
+            ) : (
+              departments.map((dept) => (
+                <MenuItem key={dept._id} value={dept._id}>
+                  {dept.title}
+                </MenuItem>
+              ))
+            )}
+          </TextField>
           <TextField
             select
             label="Chọn Sprint"
             fullWidth
             value={selectedSprintId}
             onChange={(e) => setSelectedSprintId(e.target.value)}
+            sx={{ mb: 2 }}
+            required
+            disabled={sprints.length === 0}
           >
             {sprints.length === 0 ? (
               <MenuItem value="">Không có Sprint nào khả dụng</MenuItem>
@@ -247,6 +326,15 @@ function PersonalTask({ authToken, setCurrentPage }) {
               ))
             )}
           </TextField>
+          <TextField
+            label="Mô tả Task"
+            fullWidth
+            multiline
+            rows={4}
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
+            sx={{ mb: 2 }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm} color="secondary" variant="outlined">
@@ -256,7 +344,7 @@ function PersonalTask({ authToken, setCurrentPage }) {
             onClick={handleCreateTask}
             color="primary"
             variant="contained"
-            disabled={loadingTaskCreation || !sprints.length || !taskTitle}
+
             startIcon={loadingTaskCreation ? <CircularProgress size={20} /> : null}
           >
             {loadingTaskCreation ? "Đang tạo..." : "Tạo Task"}

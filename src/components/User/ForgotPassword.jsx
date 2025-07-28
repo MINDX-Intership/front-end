@@ -12,7 +12,7 @@ const ForgotPassword = ({ setCurrentPage }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/account/forgot-password', {
+      const response = await fetch('http://localhost:3000/api/accounts/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

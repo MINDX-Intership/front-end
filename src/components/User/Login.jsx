@@ -12,7 +12,7 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
     event.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:3000/api/account/login', {
+      const response = await fetch('http://localhost:3000/api/accounts/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
       setIsVerifying(true);
       try {
         console.log('VerifyEmailPage: Using token in verification URL.',token);
-        const verificationResponse = await fetch(`http://localhost:3000/api/account/verify-email/${token}`, {
+        const verificationResponse = await fetch(`http://localhost:3000/api/accounts/verify-email/${token}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

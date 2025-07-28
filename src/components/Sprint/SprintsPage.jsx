@@ -228,7 +228,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/sprint/all', {
+            const response = await fetch('http://localhost:3000/api/sprints/all', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         if (!sprintToDelete) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/sprint/${sprintToDelete._id}`, {
+            const response = await fetch(`http://localhost:3000/api/sprints/${sprintToDelete._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
