@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
-import Login from './components/Login';
-import Register from './components/Register';
-import Profile from './components/Profile';
-import ResetPassword from './components/ResetPassword';
-import ForgotPassword from './components/ForgotPassword';
+import Login from './components/User/Login';
+import Register from './components/User/Register';
+import Profile from './components/User/Profile';
+import ResetPassword from './components/User/ResetPassword';
+import ForgotPassword from './components/User/ForgotPassword';
 import Homepage from './components/Homepage';
 import Notifications from './components/Notification';
 import Chat from './components/Chat';
 import PersonalWork from './components/PersonalWork';
-import VerifyEmailPage from './components/VerifyEmailPage';
-import CreateProfile from './components/CreateProfile';
-import PersonalTask from './components/PersonalTask';
+import VerifyEmailPage from './components/User/VerifyEmailPage';
+import CreateProfile from './components/User/CreateProfile';
+import PersonalTask from './components/Task/PersonalTask';
 import About from './components/About';
-import Timeline from './components/Timeline';
-import SprintsPage from './components/SprintsPage';
-import CreateSprint from './components/CreateSprint';
+import Timeline from './components/Task/Timeline';
+import SprintsPage from './components/Sprint/SprintsPage';
+import CreateSprint from './components/Sprint/CreateSprint';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -175,7 +175,7 @@ function App() {
     const commonAuthProtectedPageCheck = () => {
       if (!authToken) {
         navigate('/login');
-        return true; // Indicates redirect happened
+        return true;
       }
       if (!currentUser) {
           return (

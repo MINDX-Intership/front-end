@@ -6,7 +6,8 @@ import { toast } from 'react-toastify';
 
 const CreateSprint = ({ authToken, setCurrentPage }) => {
     const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
+    // Đã đổi tên state từ 'description' sang 'describe'
+    const [describe, setDescribe] = useState(''); 
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,8 +35,8 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-        if (start > end) {
-            toast.error('Ngày bắt đầu không thể sau Ngày kết thúc.');
+        if (end < start) { // Đã sửa điều kiện này thành end < start
+            toast.error('Ngày kết thúc phải sau hoặc bằng Ngày bắt đầu.');
             setLoading(false);
             return;
         }
@@ -49,7 +50,8 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
                 },
                 body: JSON.stringify({
                     title,
-                    describe: description, // Keeping 'describe' to match your current backend controller
+                    // Đã đổi tên trường gửi đi từ 'description' thành 'describe' để khớp backend
+                    describe, 
                     startDate,
                     endDate,
                 }),
@@ -59,21 +61,27 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
 
             if (response.ok) {
                 toast.success(data.message || 'Tạo sprint thành công!');
+                // Reset form fields
+                setTitle('');
+                setDescribe('');
+                setStartDate('');
+                setEndDate('');
                 setCurrentPage('/sprints'); // Navigate back to sprints list after success
             } else {
-                toast.error(data.message || 'Lỗi khi tạo sprint.');
+                toast.error(data.message || 'Có lỗi xảy ra khi tạo sprint.');
+                console.error('Lỗi từ server:', data.error || data);
             }
-        } catch (err) {
-            toast.error('Lỗi kết nối đến máy chủ.');
-            console.error('Error creating sprint:', err);
+        } catch (error) {
+            console.error('Lỗi khi gửi yêu cầu tạo sprint:', error);
+            toast.error('Không thể kết nối đến server hoặc có lỗi mạng.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Box 
-            sx={{ 
+        <Box
+            sx={{
                 minHeight: '100vh',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 display: 'flex',
@@ -82,9 +90,9 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
                 p: 3
             }}
         >
-            <Paper 
-                elevation={8} 
-                sx={{ 
+            <Paper
+                elevation={8}
+                sx={{
                     p: { xs: 3, sm: 5 },
                     maxWidth: 650,
                     width: '100%',
@@ -94,10 +102,10 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
                 }}
             >
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Typography 
-                        variant="h3" 
-                        component="h1" 
-                        sx={{ 
+                    <Typography
+                        variant="h3"
+                        component="h1"
+                        sx={{
                             fontWeight: 700,
                             background: 'linear-gradient(45deg, #667eea, #764ba2)',
                             backgroundClip: 'text',
@@ -108,8 +116,8 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
                     >
                         Tạo Sprint Mới
                     </Typography>
-                    <Typography 
-                        variant="body1" 
+                    <Typography
+                        variant="body1"
                         color="text.secondary"
                         sx={{ fontSize: '1.1rem' }}
                     >
@@ -150,8 +158,8 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
                             variant="outlined"
                             multiline
                             rows={4}
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            value={describe} // Sử dụng state 'describe'
+                            onChange={(e) => setDescribe(e.target.value)} // Cập nhật state 'describe'
                             placeholder="Mô tả chi tiết về mục tiêu và phạm vi của sprint..."
                             sx={{
                                 '& .MuiOutlinedInput-root': {

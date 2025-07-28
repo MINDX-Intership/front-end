@@ -239,7 +239,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
             const data = await response.json();
 
             if (response.ok) {
-                setSprints(data);
+                setSprints(data.sprints);
             } else {
                 setError(data.message || 'Lỗi khi tải danh sách sprint.');
                 toast.error(data.message || 'Không thể tải sprint.');
