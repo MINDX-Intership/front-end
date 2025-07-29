@@ -454,7 +454,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
           </Box>
         </ProfileHeader>
 
-        <ActionButtons>
+        <ActionButtons style={{"paddingBottom":"0px"}}>
           {isEditing ? (
             <>
               <StyledButton variant="contained" onClick={handleSave} disabled={isUploading}>
@@ -471,7 +471,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
           )}
         </ActionButtons>
 
-        <FormContainer>
+        <FormContainer style={{"paddingTop":"0px"}}>
           <SectionTitle variant="h5">Thông tin cá nhân</SectionTitle>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>

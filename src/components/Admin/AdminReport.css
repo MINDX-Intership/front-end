@@ -1,12 +1,4 @@
-:root {
-  --bkg-main: #fff;
-  --bkg-accordion: #f9f9f9;
-  --bkg-selected: #171717;
-  --text-main: #111;
-  --text-secondary: #666;
-  --bkg-chart-placeholder: #ededed;
-  --border-table: #222;
-}
+
 
 .admin-report-container {
   background: var(--bkg-main);

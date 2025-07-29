@@ -9,14 +9,13 @@ import {
   TextField,
   Button,
   CircularProgress,
-  // Removed Alert as toastify will handle messages
   Collapse,
 } from "@mui/material";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import BusinessIcon from "@mui/icons-material/Business";
+import BusinessIcon from "@mui/icons-material/Business"; // Reverted to Material-UI import
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { toast } from "react-toastify"; // Import toastify
@@ -126,48 +125,58 @@ const Admin = ({ authToken }) => {
   const [activeForm, setActiveForm] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
-  // Removed error and successMessage states as toastify handles them
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [rolesInput, setRolesInput] = useState("");
 
-  // State for department form
   const [departmentName, setDepartmentName] = useState("");
   const [departmentCode, setDepartmentCode] = useState("");
   const [departmentDesc, setDepartmentDesc] = useState("");
 
-  // Fetch all employees on mount
-  useEffect(() => {
+  // New states for Add Employee form
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [newEmployeePassword, setNewEmployeePassword] = useState('');
+  const [newEmployeeConfirmPassword, setNewEmployeeConfirmPassword] = useState('');
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [newEmployeeAge, setNewEmployeeAge] = useState(''); // Keep age state for API
+  const [newEmployeePhone, setNewEmployeePhone] = useState('');
+
+
+  // Function to fetch all employees
+  const fetchEmployees = async () => {
     if (!authToken) return;
     setLoading(true);
-    fetch("http://localhost:3000/api/users/all", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          // Changed to toast.error
-          return res.json().then(errData => { throw new Error(errData.message || `Server returned ${res.status}`); });
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setEmployees(data.users || []);
-        toast.success("Tải danh sách nhân viên thành công!"); // Success toast
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error(`Không thể tải danh sách nhân viên: ${err.message}`); // Error toast
-      })
-      .finally(() => setLoading(false));
-  }, [authToken]);
+    try {
+      const res = await fetch("http://localhost:3000/api/users/all", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || `Server returned ${res.status}`);
+      }
+      const data = await res.json();
+      setEmployees(data.users || []);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Không thể tải danh sách nhân viên: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch all employees on mount
+  useEffect(() => {
+    fetchEmployees();
+  }, [authToken]); // Dependency on authToken to refetch if it changes
 
   const handleSelectFunction = (key) => {
     setActiveForm(key);
-    // Scroll to the bottom to show the form if it appears at the bottom
+
     setTimeout(() => {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }, 0);
@@ -200,14 +209,12 @@ const Admin = ({ authToken }) => {
       );
       const data = await res.json();
       if (!res.ok) {
-        // Changed to toast.error
         throw new Error(data.message || "Cấp quyền thất bại");
       }
       toast.success("Cấp quyền thành công"); // Success toast
     } catch (err) {
       toast.error(err.message); // Error toast
     }
-    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   const updateUserAccess = async () => {
@@ -229,22 +236,17 @@ const Admin = ({ authToken }) => {
 
       const data = await res.json();
       if (!res.ok) {
-        // Changed to toast.error
         throw new Error(data.message || "Cập nhật quyền thất bại");
       }
       toast.success("Cập nhật quyền thành công"); // Success toast
     } catch (err) {
       toast.error(err.message); // Error toast
     }
-    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   const deleteUserAccess = async () => {
-    // Replaced window.confirm with a custom action on toast close
-    // The user will first get a warning, and if they close the toast (e.g., by clicking the 'x'),
-    // the delete function will proceed. This is a simplification; a full modal would be better for confirmation.
     toast.info(`Đang thực hiện xóa quyền của người dùng.`, {
-      autoClose: 2000, // Short autoClose for the info message
+      autoClose: 2000,
     });
     try {
       const res = await fetch(
@@ -259,14 +261,12 @@ const Admin = ({ authToken }) => {
 
       const data = await res.json();
       if (!res.ok) {
-        // Changed to toast.error
         throw new Error(data.message || "Xóa quyền thất bại");
       }
       toast.success("Xóa quyền thành công"); // Success toast
     } catch (err) {
       toast.error(err.message); // Error toast
     }
-    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   // --- New Function: Add Department ---
@@ -287,7 +287,6 @@ const Admin = ({ authToken }) => {
 
       const data = await res.json();
       if (!res.ok) {
-        // Changed to toast.error
         throw new Error(data.message || "Tạo phòng ban thất bại");
       }
       toast.success("Tạo phòng ban thành công!"); // Success toast
@@ -295,15 +294,62 @@ const Admin = ({ authToken }) => {
       setDepartmentName("");
       setDepartmentCode("");
       setDepartmentDesc("");
+      setActiveForm(null); // Go back to the main list
     } catch (err) {
       toast.error(err.message); // Error toast
     }
-    // Removed finally block that cleared messages, as toastify handles auto-closing
+  };
+
+  // --- New Function: Add Employee (similar to Register.jsx) ---
+  const handleAddEmployee = async (event) => {
+    event.preventDefault(); // Prevent default form submission
+
+    if (newEmployeePassword !== newEmployeeConfirmPassword) {
+      toast.error('Mật khẩu và xác nhận mật khẩu không khớp.');
+      return;
+    }
+
+    try {
+      const registerResponse = await fetch('http://localhost:3000/api/accounts/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`, // Use admin's token for authorization
+        },
+        body: JSON.stringify({
+          email: newEmployeeEmail,
+          password: newEmployeePassword,
+          confirmPassword: newEmployeeConfirmPassword,
+          name: newEmployeeName,
+          age: parseInt(newEmployeeAge), // Ensure age is an integer, even if not displayed
+          phone: newEmployeePhone,
+        }),
+      });
+
+      const registerData = await registerResponse.json();
+
+      if (registerResponse.ok) {
+        toast.success(registerData.message || 'Thêm nhân viên thành công!');
+        // Clear form fields
+        setNewEmployeeEmail('');
+        setNewEmployeePassword('');
+        setNewEmployeeConfirmPassword('');
+        setNewEmployeeName('');
+        setNewEmployeeAge(''); // Clear age state too
+        setNewEmployeePhone('');
+        setActiveForm(null); // Go back to employee list
+        fetchEmployees(); // Re-fetch all employees to update the list
+      } else {
+        toast.error(registerData.message || 'Thêm nhân viên thất bại. Vui lòng thử lại.');
+      }
+    } catch (err) {
+      console.error('Lỗi mạng hoặc vấn đề không mong muốn khi thêm nhân viên:', err);
+      toast.error('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+    }
   };
 
   const renderEmployeeList = () => {
     if (loading) return <CircularProgress />;
-    // Removed direct error Alert here, as toast will handle general errors
     if (!filteredEmployees.length && !loading)
       return <Typography>Không tìm thấy nhân viên nào.</Typography>;
 
@@ -361,7 +407,6 @@ const Admin = ({ authToken }) => {
                   color="error"
                   onClick={() => {
                     setSelectedUserId(emp._id);
-                    // Replaced window.confirm with toast.warn with action
                     toast.warn(
                         `Bạn có chắc muốn xóa quyền của ${emp.name}? Click nút này để xác nhận.`,
                         {
@@ -411,12 +456,14 @@ const Admin = ({ authToken }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (activeForm === 'addDepartment') {
-      addDepartment();
+    if (activeForm === 'add') {
+      handleAddEmployee(e); // Call the new function for adding employee
+    } else if (activeForm === 'addDepartment') {
+      addDepartment(); // Existing function for adding department
     } else {
-      toast.info('Đã gửi form!'); // For other generic forms, changed alert to toast.info
+      toast.info('Đã gửi form!'); // For other generic forms
+      setActiveForm(null); // Go back to the main list after generic submission
     }
-    setActiveForm(null); // Go back to the main list after submission
   };
 
   const handleCancel = () => {
@@ -425,6 +472,13 @@ const Admin = ({ authToken }) => {
     setDepartmentName("");
     setDepartmentCode("");
     setDepartmentDesc("");
+    // Clear new employee form fields on cancel
+    setNewEmployeeEmail('');
+    setNewEmployeePassword('');
+    setNewEmployeeConfirmPassword('');
+    setNewEmployeeName('');
+    setNewEmployeeAge('');
+    setNewEmployeePhone('');
   };
 
   const renderForm = () => {
@@ -435,16 +489,66 @@ const Admin = ({ authToken }) => {
             key="form-add"
             component="form"
             className="add-employee-form"
-            onSubmit={handleSubmit}
+            onSubmit={handleAddEmployee} // Direct submission to handleAddEmployee
             mt={4}
           >
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Thêm nhân viên mới
             </Typography>
-            <TextField label="Họ và tên" name="fullName" fullWidth size="small" margin="normal" required />
-            <TextField label="Email" name="email" type="email" fullWidth size="small" margin="normal" required />
-            <TextField label="Số điện thoại" name="phone" type="tel" fullWidth size="small" margin="normal" />
-            <TextField label="Chức vụ" name="position" fullWidth size="small" margin="normal" />
+            <TextField
+              label="Email"
+              name="email"
+              type="email"
+              fullWidth
+              size="small"
+              margin="normal"
+              required
+              value={newEmployeeEmail}
+              onChange={(e) => setNewEmployeeEmail(e.target.value)}
+            />
+            <TextField
+              label="Họ và tên"
+              name="fullName"
+              fullWidth
+              size="small"
+              margin="normal"
+              required
+              value={newEmployeeName}
+              onChange={(e) => setNewEmployeeName(e.target.value)}
+            />
+            {/* Removed the 'Tuổi' field as it's not displayed in Register.jsx */}
+            <TextField
+              label="Số điện thoại"
+              name="phone"
+              type="tel"
+              fullWidth
+              size="small"
+              margin="normal"
+              value={newEmployeePhone}
+              onChange={(e) => setNewEmployeePhone(e.target.value)}
+            />
+            <TextField
+              label="Mật khẩu"
+              name="password"
+              type="password"
+              fullWidth
+              size="small"
+              margin="normal"
+              required
+              value={newEmployeePassword}
+              onChange={(e) => setNewEmployeePassword(e.target.value)}
+            />
+            <TextField
+              label="Xác nhận mật khẩu"
+              name="confirmPassword"
+              type="password"
+              fullWidth
+              size="small"
+              margin="normal"
+              required
+              value={newEmployeeConfirmPassword}
+              onChange={(e) => setNewEmployeeConfirmPassword(e.target.value)}
+            />
             <Box className="form-buttons">
               <Button type="submit" variant="contained" color="primary">Lưu</Button>
               <Button variant="outlined" color="secondary" onClick={handleCancel} sx={{ ml: 2 }}>Hủy</Button>
@@ -563,7 +667,7 @@ const Admin = ({ authToken }) => {
             key="form-addDepartment"
             component="form"
             className="add-employee-form"
-            onSubmit={handleSubmit} // This will now call `addDepartment`
+            onSubmit={handleSubmit}
             mt={4}
           >
             <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -629,18 +733,6 @@ const Admin = ({ authToken }) => {
           Thêm mới nhân viên
         </Button>
       </Box>
-
-      {/* Removed direct Display Messages via Alert, toastify handles them */}
-      {/* {successMessage && (
-        <Alert severity="success" sx={{ mt: 2 }}>
-          {successMessage}
-        </Alert>
-      )}
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )} */}
 
       {/* Conditional Rendering of Forms or Employee List */}
       {activeForm ? (

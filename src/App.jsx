@@ -11,7 +11,7 @@ import Chat from "./components/Chat";
 import PersonalWork from "./components/PersonalWork";
 import VerifyEmailPage from "./components/User/VerifyEmailPage";
 import CreateProfile from "./components/User/CreateProfile";
-import PersonalTask from "./components/Task/PersonalTask"; // Đảm bảo import đúng
+import PersonalTask from "./components/Task/PersonalTask";
 import About from "./components/About";
 import Timeline from "./components/Task/Timeline";
 import SprintsPage from "./components/Sprint/SprintsPage";
@@ -21,6 +21,7 @@ import AdminReport from "./components/Admin/AdminReport";
 import AdminTimeline from "./components/Admin/AdminTimeline";
 import MeetingSchedule from "./components/MeetingSchedule";
 import SupportRequest from "./components/SupportRequest";
+import DocumentsPage from "./components/DocumentsPage"; // Import DocumentsPage
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -70,19 +71,31 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        if (data.message?.includes("Không tìm thấy thông tin người dùng")) {
-          setCurrentUser(null);
-          return { needsProfileCreation: true, error: false, user: null };
-        } else {
-          setCurrentUser(data.user); // data.user là đối tượng user bạn đã gửi
-          console.log("Fetched user profile:", data.user); // Debugging
+        // Kiểm tra trực tiếp sự tồn tại và tính hợp lệ của đối tượng user
+        if (data.user && data.user._id) {
+          setCurrentUser(data.user);
+          console.log("Fetched user profile:", data.user);
           return { needsProfileCreation: false, error: false, user: data.user };
+        } else {
+          // Nếu phản hồi là OK nhưng đối tượng user bị thiếu hoặc không hợp lệ, coi như cần tạo hồ sơ
+          setCurrentUser(null);
+          console.warn("User profile data missing from API response:", data);
+          return { needsProfileCreation: true, error: false, user: null, message: data.message || "Không tìm thấy hồ sơ người dùng." };
         }
       } else {
         setCurrentUser(null);
         console.error("Error fetching profile, response not ok:", data.message);
+        // Nếu lỗi HTTP là 404 hoặc thông báo lỗi rõ ràng cho biết không tìm thấy hồ sơ, coi như cần tạo hồ sơ
+        if (response.status === 404 || data.message?.includes("Không tìm thấy thông tin người dùng")) {
+            return {
+                needsProfileCreation: true, // Coi như cần tạo hồ sơ nếu rõ ràng là 404 hoặc thông báo gợi ý
+                error: false, // Đây là một trạng thái hợp lệ (chưa có hồ sơ), không phải lỗi trong yêu cầu
+                user: null,
+                message: data.message || "Không tìm thấy hồ sơ người dùng.",
+            };
+        }
         return {
-          needsProfileCreation: false,
+          needsProfileCreation: false, // Mặc định là false cho các lỗi khác
           error: true,
           user: null,
           message: data.message,
@@ -135,6 +148,7 @@ function App() {
           "/verify-email",
           "/about",
           "/timeline",
+          "/documents", // Add /documents to public pages
         ];
         if (
           !publicPages.some((publicPath) => currentPage.startsWith(publicPath))
@@ -162,6 +176,7 @@ function App() {
           profileResult.message ||
             "Đăng nhập thành công nhưng không thể tải hồ sơ. Vui lòng thử lại."
         );
+        handleLogout();
       } else {
         navigate("/homepage");
       }
@@ -194,6 +209,7 @@ function App() {
       "/verify-email",
       "/about",
       "/timeline",
+      "/documents", // Keep /documents in public pages for direct access
     ];
     const isPublicPage = publicPages.some((publicPath) =>
       path.startsWith(publicPath)
@@ -218,8 +234,70 @@ function App() {
       );
     }
 
-    // Redirect to login if not authenticated and not a public page
-    if (!isPublicPage && !authToken) {
+    // NEW LOGIC: Allow public pages even if not authenticated
+    if (isPublicPage) {
+        switch (true) {
+            case path === "/login":
+                return (
+                    <Login
+                        setCurrentPage={navigate}
+                        onLoginSuccess={handleLoginSuccess}
+                    />
+                );
+            case path === "/register":
+                return <Register setCurrentPage={navigate} />;
+            case path === "/forgot-password":
+                return <ForgotPassword setCurrentPage={navigate} />;
+            case path.startsWith("/reset-password/"):
+                const resetToken = path.split("/reset-password/")[1];
+                return <ResetPassword setCurrentPage={navigate} token={resetToken} />;
+            case path.startsWith("/verify-email/"):
+                const emailVerificationToken = path.split("/verify-email/")[1];
+                if (!emailVerificationToken) {
+                    return (
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                height: "80vh",
+                            }}
+                        >
+                            <p>Mã xác minh email không hợp lệ hoặc bị thiếu.</p>
+                        </div>
+                    );
+                }
+                return (
+                    <VerifyEmailPage
+                        token={emailVerificationToken}
+                        setCurrentPage={navigate}
+                        onVerificationSuccess={handleLoginSuccess}
+                    />
+                );
+            case path === "/about":
+                return <About />;
+            case path === "/timeline":
+                return <Timeline />;
+            case path === "/documents": // Directly render DocumentsPage if it's a public page
+                return (
+                    <DocumentsPage
+                        authToken={authToken} // authToken might be null here if not logged in
+                        currentUser={currentUser} // currentUser might be null here if not logged in
+                        setCurrentPage={navigate}
+                    />
+                );
+            default:
+                // This case should ideally not be hit if all public pages are explicitly handled
+                // But as a fallback, if an unknown public path is accessed, direct to login.
+                if (!authToken) {
+                    navigate("/login");
+                    return null;
+                }
+        }
+    }
+
+    // If not a public page AND not authenticated, redirect to login
+    if (!authToken) {
       navigate("/login");
       return null;
     }
@@ -238,8 +316,7 @@ function App() {
     if (
       authToken &&
       !currentUser &&
-      !isPublicPage &&
-      path !== "/create-profile"
+      path !== "/create-profile" // Ensure we don't redirect from create-profile itself
     ) {
       navigate("/create-profile");
       return null;
@@ -248,6 +325,7 @@ function App() {
     // Helper for pages requiring authentication and user profile
     const commonAuthProtectedPageCheck = () => {
       if (!authToken) {
+        // This case should ideally be caught by the general !authToken check above
         navigate("/login");
         return true; // Indicate that navigation happened, component should not render
       }
@@ -260,6 +338,7 @@ function App() {
               justifyContent: "center",
               alignItems: "center",
               height: "80vh",
+              flexDirection: "column",
             }}
           >
             <CircularProgress />
@@ -273,43 +352,6 @@ function App() {
     };
 
     switch (true) {
-      case path === "/login":
-        return (
-          <Login
-            setCurrentPage={navigate}
-            onLoginSuccess={handleLoginSuccess}
-          />
-        );
-      case path === "/register":
-        return <Register setCurrentPage={navigate} />;
-      case path === "/forgot-password":
-        return <ForgotPassword setCurrentPage={navigate} />;
-      case path.startsWith("/reset-password/"):
-        const resetToken = path.split("/reset-password/")[1];
-        return <ResetPassword setCurrentPage={navigate} token={resetToken} />;
-      case path.startsWith("/verify-email/"):
-        const emailVerificationToken = path.split("/verify-email/")[1];
-        if (!emailVerificationToken) {
-          return (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "80vh",
-              }}
-            >
-              <p>Mã xác minh email không hợp lệ hoặc bị thiếu.</p>
-            </div>
-          );
-        }
-        return (
-          <VerifyEmailPage
-            token={emailVerificationToken}
-            setCurrentPage={navigate}
-            onVerificationSuccess={handleLoginSuccess}
-          />
-        );
       case path === "/profile":
         const profileCheck = commonAuthProtectedPageCheck();
         if (profileCheck === true) return null;
@@ -357,50 +399,40 @@ function App() {
           />
         );
       case path === "/personal-work":
-        // Dòng này cần được kiểm tra quyền và user
         const personalWorkCheck = commonAuthProtectedPageCheck();
         if (personalWorkCheck === true) return null;
         if (personalWorkCheck !== false) return personalWorkCheck;
-        return <PersonalWork setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />; // Giả định PersonalWork cũng cần currentUser
+        return <PersonalWork setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
       case path === "/personal-task":
-        const personalTaskCheck = commonAuthProtectedPageCheck(); // <-- Sử dụng hàm kiểm tra quyền
-        if (personalTaskCheck === true) return null; // Nếu đã chuyển hướng
-        if (personalTaskCheck !== false) return personalTaskCheck; // Nếu đang hiển thị spinner
-
-        // Nếu tất cả các kiểm tra đều qua, truyền currentUser._id
+        const personalTaskCheck = commonAuthProtectedPageCheck();
+        if (personalTaskCheck === true) return null;
+        if (personalTaskCheck !== false) return personalTaskCheck;
         return (
           <PersonalTask
             setCurrentPage={navigate}
             authToken={authToken}
-            currentUserId={currentUser._id} // <-- THAY ĐỔI QUAN TRỌNG NHẤT Ở ĐÂY
+            currentUserId={currentUser._id}
           />
         );
       case path === "/notifications":
-        // Dòng này cần được kiểm tra quyền và user
         const notificationsCheck = commonAuthProtectedPageCheck();
         if (notificationsCheck === true) return null;
         if (notificationsCheck !== false) return notificationsCheck;
-        return <Notifications setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />; // Giả định Notifications cũng cần
+        return <Notifications setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
       case path === "/chat":
-        // Dòng này cần được kiểm tra quyền và user
         const chatCheck = commonAuthProtectedPageCheck();
         if (chatCheck === true) return null;
         if (chatCheck !== false) return chatCheck;
-        return <Chat setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />; // Giả định Chat cũng cần
-      case path === "/about":
-        return <About />;
-      case path === "/timeline":
-        return <Timeline />;
+        return <Chat setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
 
       // ===== ADMIN ROUTES =====
       case path === "/admin":
-        // Kiểm tra quyền ADMIN ở đây
         if (!authToken || !currentUser) {
           toast.error("Bạn không có quyền truy cập trang Admin.");
           navigate("/homepage");
           return null;
         }
-        if (currentUser.roleTag !== "ADMIN") { // Thêm kiểm tra roleTag
+        if (currentUser.roleTag !== "ADMIN") {
           toast.error("Bạn không có quyền truy cập trang Admin.");
           navigate("/homepage");
           return null;
@@ -414,7 +446,6 @@ function App() {
         );
 
       case path === "/admin-report":
-        // Kiểm tra quyền ADMIN ở đây
         if (!authToken || !currentUser || currentUser.roleTag !== "ADMIN") {
           toast.error("Bạn không có quyền truy cập báo cáo.");
           navigate("/homepage");
@@ -429,7 +460,6 @@ function App() {
         );
 
       case path === "/admin-timeline":
-        // Kiểm tra quyền ADMIN ở đây
         if (!authToken || !currentUser || currentUser.roleTag !== "ADMIN") {
           toast.error("Bạn không có quyền truy cập timeline quản trị.");
           navigate("/homepage");
@@ -443,34 +473,35 @@ function App() {
           />
         );
 
-      case path === "/homepage":
-      case path === "/":
-        // Homepage cũng là trang được bảo vệ
-        const homepageCheck = commonAuthProtectedPageCheck();
-        if (homepageCheck === true) return null;
-        if (homepageCheck !== false) return homepageCheck;
-        return <Homepage setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />; // Giả định Homepage cũng cần
-      
-      case path === "/meeting-schedule": // Thêm route mới nếu chưa có
+      case path === "/meeting-schedule":
         const meetingScheduleCheck = commonAuthProtectedPageCheck();
         if (meetingScheduleCheck === true) return null;
         if (meetingScheduleCheck !== false) return meetingScheduleCheck;
         return <MeetingSchedule setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
 
-      case path === "/support-request": // Thêm route mới nếu chưa có
+      case path === "/support-request":
         const supportRequestCheck = commonAuthProtectedPageCheck();
         if (supportRequestCheck === true) return null;
         if (supportRequestCheck !== false) return supportRequestCheck;
         return <SupportRequest setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
 
-
+      // Removed DocumentsPage from here as it's now handled as a public page
+      
+      case path === "/homepage":
+      case path === "/":
+        const homepageCheck = commonAuthProtectedPageCheck();
+        if (homepageCheck === true) return null;
+        if (homepageCheck !== false) return homepageCheck;
+        return <Homepage setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
+        
       default:
+        // If it's not a known public page and not authenticated, redirect to login
+        // If it's an unknown authenticated route, redirect to homepage
         if (authToken && currentUser) {
           navigate("/homepage");
-          return null;
+        } else {
+          navigate("/login");
         }
-        // Fallback for unauthenticated users on unknown routes
-        navigate("/login"); // Chuyển hướng về trang đăng nhập
         return null;
     }
   };
