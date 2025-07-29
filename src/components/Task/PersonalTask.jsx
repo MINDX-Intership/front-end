@@ -10,14 +10,24 @@ import {
   TextField,
   MenuItem,
   CircularProgress,
-  Snackbar,
-  Alert,
   useTheme,
+  Card,
+  CardContent,
+  Chip,
+  Avatar,
+  Divider,
 } from "@mui/material";
-import { AddCircleOutline as AddCircleOutlineIcon } from "@mui/icons-material";
+import { 
+  AddCircleOutline as AddCircleOutlineIcon,
+  Person as PersonIcon,
+  CalendarToday as CalendarIcon,
+  Assignment as TaskIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import { toast } from "react-toastify";
 
 const API_BASE_URL = "http://localhost:3000/api";
-const LOADING_DELAY_MS = 2000; // 2-second delay
+const LOADING_DELAY_MS = 1000; // 1-second delay for a smoother experience
 
 function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
   const [openForm, setOpenForm] = useState(false);
@@ -27,41 +37,29 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
   const [selectedDepartId, setSelectedDepartId] = useState("");
   const [sprints, setSprints] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [myTasks, setMyTasks] = useState([]); // New state for personal tasks
   const [loadingSprints, setLoadingSprints] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [loadingMyTasks, setLoadingMyTasks] = useState(true); // New loading state
   const [loadingTaskCreation, setLoadingTaskCreation] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState(null); // Track which task is being deleted
   const [error, setError] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "error",
-  });
 
   const theme = useTheme();
 
-  const showSnackbar = useCallback((message, severity) => {
-    setSnackbar({ open: true, message, severity });
-  }, []);
-
-  const handleCloseSnackbar = useCallback((event, reason) => {
-    if (reason === "clickaway") return;
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  }, []);
-
-  // --- Utility for adding delay ---
-  const delay = (ms) => new Promise(res => setTimeout(res, ms));
+  // Utility for adding delay
+  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
   // --- Fetch Sprints ---
   const fetchSprints = useCallback(async () => {
     if (!authToken) {
-      showSnackbar("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.", "error");
+      toast.error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       setLoadingSprints(false);
       return;
     }
 
     setLoadingSprints(true);
-    setError(null);
-
+    // Don't clear global error here, let combined error handle it
     try {
       const response = await fetch(`${API_BASE_URL}/sprints/all`, {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -72,37 +70,35 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
       }
 
       const data = await response.json();
-      const sprintArray = data.sprints; // Assuming 'sprints' is the key for sprint data
+      const sprintArray = data.sprints;
       if (Array.isArray(sprintArray)) {
         setSprints(sprintArray);
         setSelectedSprintId(sprintArray[0]?._id || "");
       } else {
-        showSnackbar("Dữ liệu sprint trả về không hợp lệ.", "error");
+        toast.error("Dữ liệu sprint trả về không hợp lệ.");
         setSprints([]);
         setSelectedSprintId("");
       }
     } catch (err) {
       console.error("Lỗi khi tải danh sách sprint:", err);
-      setError(err);
-      showSnackbar(`Lỗi khi tải danh sách sprint: ${err.message}`, "error");
+      setError((prev) => prev ? new Error(`${prev.message}\n${err.message}`) : err);
+      toast.error(`Lỗi khi tải danh sách sprint: ${err.message}`);
     } finally {
-      // Delay before setting loading to false
       await delay(LOADING_DELAY_MS);
       setLoadingSprints(false);
     }
-  }, [authToken, showSnackbar]);
+  }, [authToken]);
 
   // --- Fetch Departments ---
   const fetchDepartments = useCallback(async () => {
     if (!authToken) {
-      showSnackbar("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.", "error");
+      toast.error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       setLoadingDepartments(false);
       return;
     }
 
     setLoadingDepartments(true);
-    setError(null);
-
+    // Don't clear global error here
     try {
       const response = await fetch(`${API_BASE_URL}/departs/all`, {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -112,33 +108,69 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
         throw new Error(errorData.message || "Không thể tải danh sách phòng ban");
       }
 
-      const responseData = await response.json(); // Use a different variable name to avoid confusion
-      // --- IMPORTANT CHANGE HERE: Accessing 'data' field ---
-      const departmentArray = responseData.data; // Now correctly accessing the 'data' array
+      const responseData = await response.json();
+      const departmentArray = responseData.data;
       if (Array.isArray(departmentArray)) {
         setDepartments(departmentArray);
         setSelectedDepartId(departmentArray[0]?._id || "");
       } else {
-        showSnackbar("Dữ liệu phòng ban trả về không hợp lệ.", "error");
+        toast.error("Dữ liệu phòng ban trả về không hợp lệ.");
         setDepartments([]);
         setSelectedDepartId("");
       }
     } catch (err) {
       console.error("Lỗi khi tải danh sách phòng ban:", err);
-      setError(err);
-      showSnackbar(`Lỗi khi tải danh sách phòng ban: ${err.message}`, "error");
+      setError((prev) => prev ? new Error(`${prev.message}\n${err.message}`) : err);
+      toast.error(`Lỗi khi tải danh sách phòng ban: ${err.message}`);
     } finally {
-      // Delay before setting loading to false
       await delay(LOADING_DELAY_MS);
       setLoadingDepartments(false);
     }
-  }, [authToken, showSnackbar]);
+  }, [authToken]);
 
-  // Fetch data on component mount
+  // --- Fetch My Tasks ---
+  const fetchMyTasks = useCallback(async () => {
+    if (!authToken) {
+      toast.error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
+      setLoadingMyTasks(false);
+      return;
+    }
+
+    setLoadingMyTasks(true);
+    // Don't clear global error here
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/my-tasks`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Không thể tải danh sách task cá nhân");
+      }
+
+      const data = await response.json();
+      const tasksArray = data.tasks;
+      if (Array.isArray(tasksArray)) {
+        setMyTasks(tasksArray);
+      } else {
+        toast.error("Dữ liệu task cá nhân trả về không hợp lệ.");
+        setMyTasks([]);
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách task cá nhân:", err);
+      setError((prev) => prev ? new Error(`${prev.message}\n${err.message}`) : err);
+      toast.error(`Lỗi khi tải danh sách task cá nhân: ${err.message}`);
+    } finally {
+      await delay(LOADING_DELAY_MS);
+      setLoadingMyTasks(false);
+    }
+  }, [authToken]);
+
+  // Fetch all necessary data on component mount
   useEffect(() => {
     fetchSprints();
     fetchDepartments();
-  }, [fetchSprints, fetchDepartments]);
+    fetchMyTasks(); // Fetch personal tasks
+  }, [fetchSprints, fetchDepartments, fetchMyTasks]);
 
   const handleOpenForm = () => setOpenForm(true);
   const handleCloseForm = () => {
@@ -152,12 +184,12 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
 
   const handleCreateTask = async () => {
     if (!taskTitle || !selectedSprintId || !selectedDepartId) {
-      showSnackbar("Vui lòng điền Tiêu đề, chọn Sprint và Phòng ban.", "warning");
+      toast.warn("Vui lòng điền Tiêu đề, chọn Sprint và Phòng ban.");
       return;
     }
     if (!currentUserId) {
-        showSnackbar("Không thể tạo task: Thông tin người dùng không có sẵn. Vui lòng đăng nhập lại.", "error");
-        return;
+      toast.error("Không thể tạo task: Thông tin người dùng không có sẵn. Vui lòng đăng nhập lại.");
+      return;
     }
 
     setLoadingTaskCreation(true);
@@ -173,33 +205,67 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
           body: JSON.stringify({
             departId: selectedDepartId,
             createdBy: currentUserId,
-            assignees: [currentUserId], // User creates task for themselves
+            assignees: [currentUserId], // Assign to self initially
             title: taskTitle,
             description: taskDescription,
+            sprint: selectedSprintId, // Ensure sprint ID is sent
           }),
         }
       );
 
       const data = await response.json();
       if (response.status === 201) {
-        showSnackbar("Tạo task thành công!", "success");
+        toast.success("Tạo task thành công!");
         handleCloseForm();
+        fetchMyTasks(); // Re-fetch tasks to update the list
       } else {
-        showSnackbar(
-          `Lỗi khi tạo task: ${data.message || "Lỗi không xác định"}`,
-          "error"
-        );
+        toast.error(`Lỗi khi tạo task: ${data.message || "Lỗi không xác định"}`);
       }
     } catch (err) {
       console.error("Lỗi khi tạo task:", err);
-      showSnackbar(`Lỗi khi tạo task: ${err.message}`, "error");
+      toast.error(`Lỗi khi tạo task: ${err.message}`);
     } finally {
       setLoadingTaskCreation(false);
     }
   };
 
+  // --- Delete Task ---
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa task này không?")) {
+      return;
+    }
+
+    if (!authToken) {
+      toast.error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    setDeletingTaskId(taskId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Xóa task thành công!");
+        fetchMyTasks(); // Re-fetch tasks to update the list
+      } else {
+        const errorData = await response.json();
+        toast.error(`Lỗi khi xóa task: ${errorData.message || "Lỗi không xác định"}`);
+      }
+    } catch (err) {
+      console.error("Lỗi khi xóa task:", err);
+      toast.error(`Lỗi khi xóa task: ${err.message}`);
+    } finally {
+      setDeletingTaskId(null);
+    }
+  };
+
   // Combine loading states for initial render
-  if (loadingSprints || loadingDepartments) {
+  if (loadingSprints || loadingDepartments || loadingMyTasks) {
     return (
       <Box
         sx={{
@@ -221,7 +287,7 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
     );
   }
 
-  // Handle errors for either fetch operation after initial load attempt
+  // Handle errors for any fetch operation after initial load attempt
   if (error) {
     return (
       <Box
@@ -236,40 +302,292 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
         <Typography variant="h6" color="error" sx={{ mb: 1 }}>
           Đã xảy ra lỗi: {error.message || "Lỗi không xác định"}
         </Typography>
-        <Button variant="contained" onClick={() => { fetchSprints(); fetchDepartments(); }} sx={{ mt: 2 }}>
+        <Button variant="contained" onClick={() => {
+          setError(null); // Clear error before retrying
+          fetchSprints();
+          fetchDepartments();
+          fetchMyTasks();
+        }} sx={{ mt: 2 }}>
           Thử lại
         </Button>
       </Box>
     );
   }
 
+  const getStatusChipColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "not_started":
+      case "notstarted":
+        return "default";
+      case "in_progress":
+      case "inprogress":
+        return "info";
+      case "completed":
+        return "success";
+      case "on_hold":
+      case "onhold":
+        return "warning";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getPriorityChipColor = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case "low":
+        return "default";
+      case "medium":
+        return "info";
+      case "high":
+        return "warning";
+      case "critical":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const formatVietnameseDate = (dateString) => {
+    const date = new Date(dateString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    
+    return `${hours}:${minutes}, ${day}/${month}/${year}`;
+  };
+
   return (
-    <Box sx={{ p: 3, maxWidth: 800, margin: "auto", mt: 4 }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-      >
-        Quản lý Task Cá Nhân
-      </Typography>
+    <Box sx={{ p: 2, maxWidth: 900, margin: "auto", mt: 2 }}>
+      {/* Header Section */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography
+          variant="h3"
+          gutterBottom
+          sx={{ fontWeight: "bold", color: theme.palette.primary.main, mb: 2 }}
+        >
+          Quản lý Task Cá Nhân
+        </Typography>
 
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<AddCircleOutlineIcon />}
-        onClick={handleOpenForm}
-        sx={{ mb: 3, borderRadius: 2 }}
-      >
-        Tạo Task Mới
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleOpenForm}
+          sx={{ 
+            borderRadius: 3, 
+            py: 1.8, 
+            px: 4, 
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+          }}
+        >
+          Tạo Task Mới
+        </Button>
+      </Box>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
+      {/* Tasks Section */}
+      <Box>
+        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
           Các Task của bạn
         </Typography>
-        <Typography variant="body1" color="text.disabled">
-          Danh sách task sẽ được hiển thị ở đây. (Chức năng đang phát triển)
-        </Typography>
+        {myTasks.length === 0 ? (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 6,
+              bgcolor: theme.palette.background.default,
+              borderRadius: 3,
+              border: `2px dashed ${theme.palette.divider}`,
+            }}
+          >
+            <TaskIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
+            <Typography variant="h5" color="text.disabled" sx={{ mb: 1 }}>
+              Bạn chưa có task nào
+            </Typography>
+            <Typography variant="h6" color="text.disabled">
+              Hãy tạo một task mới để bắt đầu!
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {myTasks.map((task) => (
+              <Card
+                key={task._id}
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  transition: "all 0.3s ease",
+                  border: `1px solid ${theme.palette.divider}`,
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                    borderColor: theme.palette.primary.main,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  {/* Title and Status Row */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography 
+                      variant="h4" 
+                      component="div" 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        color: theme.palette.text.primary,
+                        flex: 1,
+                        textAlign: 'right',
+                        mr: 3
+                      }}
+                    >
+                      {task.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                      <Chip
+                        label={task.status?.replace(/_/g, ' ').toUpperCase()}
+                        color={getStatusChipColor(task.status)}
+                        sx={{ 
+                          fontWeight: 'bold',
+                          fontSize: '1rem',
+                          height: 40,
+                          '& .MuiChip-label': { px: 3, py: 1 }
+                        }}
+                      />
+                      <Chip
+                        label={`${task.priority?.toUpperCase()}`}
+                        color={getPriorityChipColor(task.priority)}
+                        sx={{ 
+                          fontWeight: 'bold',
+                          fontSize: '1rem',
+                          height: 40,
+                          '& .MuiChip-label': { px: 3, py: 1 }
+                        }}
+                      />
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDeleteTask(task._id)}
+                        disabled={deletingTaskId === task._id}
+                        startIcon={
+                          deletingTaskId === task._id ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <DeleteIcon />
+                          )
+                        }
+                        sx={{
+                          minWidth: 44,
+                          height: 40,
+                          borderRadius: 2,
+                          '&:hover': {
+                            bgcolor: 'error.light',
+                            color: 'white',
+                            borderColor: 'error.main'
+                          }
+                        }}
+                      >
+                        {deletingTaskId === task._id ? '' : ''}
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Description Row */}
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        minWidth: 80,
+                        color: theme.palette.text.primary
+                      }}
+                    >
+                      Mô tả:
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      color="text.secondary" 
+                      sx={{ 
+                        flex: 1,
+                        lineHeight: 1.4,
+                        bgcolor: theme.palette.action.hover,
+                        p: 2,
+                        borderRadius: 2,
+                        borderLeft: `4px solid ${theme.palette.primary.main}`
+                      }}
+                    >
+                      {task.description || "Không có mô tả."}
+                    </Typography>
+                  </Box>
+
+                  {/* Info Section */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-around',
+                    alignItems: 'center',
+                    bgcolor: theme.palette.background.default,
+                    p: 2.5,
+                    borderRadius: 2,
+                    gap: 3
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 40, height: 40 }}>
+                        <PersonIcon sx={{ fontSize: 24 }} />
+                      </Avatar>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
+                          Tạo bởi
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                          {task.createdBy?.name || "N/A"}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Divider orientation="vertical" flexItem />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
+                      <Avatar sx={{ bgcolor: theme.palette.secondary.main, width: 40, height: 40 }}>
+                        <CalendarIcon sx={{ fontSize: 24 }} />
+                      </Avatar>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
+                          Ngày tạo
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                          {formatVietnameseDate(task.createdAt)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {task.assignees && task.assignees.length > 0 && (
+                      <>
+                        <Divider orientation="vertical" flexItem />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
+                          <Avatar sx={{ bgcolor: theme.palette.success.main, width: 40, height: 40 }}>
+                            <PersonIcon sx={{ fontSize: 24 }} />
+                          </Avatar>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
+                              Người được giao
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold">
+                              {task.assignees.map(a => a.name).join(', ')}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        )}
       </Box>
 
       <Dialog open={openForm} onClose={handleCloseForm} fullWidth maxWidth="sm">
@@ -344,27 +662,13 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
             onClick={handleCreateTask}
             color="primary"
             variant="contained"
-
+            disabled={loadingTaskCreation}
             startIcon={loadingTaskCreation ? <CircularProgress size={20} /> : null}
           >
             {loadingTaskCreation ? "Đang tạo..." : "Tạo Task"}
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

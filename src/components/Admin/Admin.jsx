@@ -9,7 +9,7 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Alert,
+  // Removed Alert as toastify will handle messages
   Collapse,
 } from "@mui/material";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
@@ -19,6 +19,7 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import BusinessIcon from "@mui/icons-material/Business";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { toast } from "react-toastify"; // Import toastify
 
 import "./Admin.css";
 
@@ -125,11 +126,10 @@ const Admin = ({ authToken }) => {
   const [activeForm, setActiveForm] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Removed error and successMessage states as toastify handles them
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [rolesInput, setRolesInput] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   // State for department form
   const [departmentName, setDepartmentName] = useState("");
@@ -148,16 +148,19 @@ const Admin = ({ authToken }) => {
       },
     })
       .then((res) => {
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        if (!res.ok) {
+          // Changed to toast.error
+          return res.json().then(errData => { throw new Error(errData.message || `Server returned ${res.status}`); });
+        }
         return res.json();
       })
       .then((data) => {
         setEmployees(data.users || []);
-        setError("");
+        toast.success("Tải danh sách nhân viên thành công!"); // Success toast
       })
       .catch((err) => {
         console.error(err);
-        setError("Không thể tải danh sách nhân viên.");
+        toast.error(`Không thể tải danh sách nhân viên: ${err.message}`); // Error toast
       })
       .finally(() => setLoading(false));
   }, [authToken]);
@@ -196,16 +199,15 @@ const Admin = ({ authToken }) => {
         }
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Cấp quyền thất bại");
-      setSuccessMessage("Cấp quyền thành công");
+      if (!res.ok) {
+        // Changed to toast.error
+        throw new Error(data.message || "Cấp quyền thất bại");
+      }
+      toast.success("Cấp quyền thành công"); // Success toast
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setTimeout(() => {
-        setSuccessMessage("");
-        setError("");
-      }, 3000);
+      toast.error(err.message); // Error toast
     }
+    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   const updateUserAccess = async () => {
@@ -226,19 +228,24 @@ const Admin = ({ authToken }) => {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Cập nhật quyền thất bại");
-      setSuccessMessage("Cập nhật quyền thành công");
+      if (!res.ok) {
+        // Changed to toast.error
+        throw new Error(data.message || "Cập nhật quyền thất bại");
+      }
+      toast.success("Cập nhật quyền thành công"); // Success toast
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setTimeout(() => {
-        setSuccessMessage("");
-        setError("");
-      }, 3000);
+      toast.error(err.message); // Error toast
     }
+    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   const deleteUserAccess = async () => {
+    // Replaced window.confirm with a custom action on toast close
+    // The user will first get a warning, and if they close the toast (e.g., by clicking the 'x'),
+    // the delete function will proceed. This is a simplification; a full modal would be better for confirmation.
+    toast.info(`Đang thực hiện xóa quyền của người dùng.`, {
+      autoClose: 2000, // Short autoClose for the info message
+    });
     try {
       const res = await fetch(
         `http://localhost:3000/api/admin/access-control/delete/${selectedUserId}`,
@@ -251,16 +258,15 @@ const Admin = ({ authToken }) => {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Xóa quyền thất bại");
-      setSuccessMessage("Xóa quyền thành công");
+      if (!res.ok) {
+        // Changed to toast.error
+        throw new Error(data.message || "Xóa quyền thất bại");
+      }
+      toast.success("Xóa quyền thành công"); // Success toast
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setTimeout(() => {
-        setSuccessMessage("");
-        setError("");
-      }, 3000);
+      toast.error(err.message); // Error toast
     }
+    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   // --- New Function: Add Department ---
@@ -280,25 +286,24 @@ const Admin = ({ authToken }) => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Tạo phòng ban thất bại");
-      setSuccessMessage("Tạo phòng ban thành công!");
+      if (!res.ok) {
+        // Changed to toast.error
+        throw new Error(data.message || "Tạo phòng ban thất bại");
+      }
+      toast.success("Tạo phòng ban thành công!"); // Success toast
       // Clear form fields
       setDepartmentName("");
       setDepartmentCode("");
       setDepartmentDesc("");
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setTimeout(() => {
-        setSuccessMessage("");
-        setError("");
-      }, 3000);
+      toast.error(err.message); // Error toast
     }
+    // Removed finally block that cleared messages, as toastify handles auto-closing
   };
 
   const renderEmployeeList = () => {
     if (loading) return <CircularProgress />;
-    if (error && !activeForm) return <Alert severity="error">{error}</Alert>;
+    // Removed direct error Alert here, as toast will handle general errors
     if (!filteredEmployees.length && !loading)
       return <Typography>Không tìm thấy nhân viên nào.</Typography>;
 
@@ -341,7 +346,7 @@ const Admin = ({ authToken }) => {
                       "Nhập danh sách role mới (cách nhau bởi dấu phẩy):",
                       emp.roleTag || ""
                     );
-                    if (role !== null) {
+                    if (role !== null) { // prompt returns null if cancelled
                       setRolesInput(role);
                       updateUserAccess();
                     }
@@ -356,13 +361,24 @@ const Admin = ({ authToken }) => {
                   color="error"
                   onClick={() => {
                     setSelectedUserId(emp._id);
-                    if (
-                      window.confirm(
-                        `Bạn có chắc muốn xóa quyền của ${emp.name}?`
-                      )
-                    ) {
-                      deleteUserAccess();
-                    }
+                    // Replaced window.confirm with toast.warn with action
+                    toast.warn(
+                        `Bạn có chắc muốn xóa quyền của ${emp.name}? Click nút này để xác nhận.`,
+                        {
+                            position: "top-center",
+                            autoClose: 5000,
+                            hideProgressBar: false,
+                            closeOnClick: false, // Prevent toast from closing on click
+                            pauseOnHover: true,
+                            draggable: true,
+                            progress: undefined,
+                            theme: "colored",
+                            onClick: () => { // This acts as a confirmation click on the toast itself
+                                deleteUserAccess();
+                                toast.dismiss(); // Dismiss the warning toast immediately after "confirmation"
+                            }
+                        }
+                    );
                   }}
                 >
                   Xóa quyền
@@ -377,7 +393,7 @@ const Admin = ({ authToken }) => {
                     const role = prompt(
                       "Nhập roles để cấp quyền (cách nhau bởi dấu phẩy):"
                     );
-                    if (role !== null) {
+                    if (role !== null) { // prompt returns null if cancelled
                       setRolesInput(role);
                       grantUserAccess();
                     }
@@ -398,7 +414,7 @@ const Admin = ({ authToken }) => {
     if (activeForm === 'addDepartment') {
       addDepartment();
     } else {
-      alert('Đã gửi form!'); // For other generic forms
+      toast.info('Đã gửi form!'); // For other generic forms, changed alert to toast.info
     }
     setActiveForm(null); // Go back to the main list after submission
   };
@@ -614,8 +630,8 @@ const Admin = ({ authToken }) => {
         </Button>
       </Box>
 
-      {/* Display Messages */}
-      {successMessage && (
+      {/* Removed direct Display Messages via Alert, toastify handles them */}
+      {/* {successMessage && (
         <Alert severity="success" sx={{ mt: 2 }}>
           {successMessage}
         </Alert>
@@ -624,7 +640,7 @@ const Admin = ({ authToken }) => {
         <Alert severity="error" sx={{ mt: 2 }}>
           {error}
         </Alert>
-      )}
+      )} */}
 
       {/* Conditional Rendering of Forms or Employee List */}
       {activeForm ? (
