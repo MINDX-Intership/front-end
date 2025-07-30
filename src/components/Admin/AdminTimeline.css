@@ -1,3 +1,5 @@
+/* AdminTimeline.css */
+
 .admin-timeline-root {
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
   min-height: 100vh;
@@ -55,7 +57,8 @@
 .custom-card {
   width: 1150px;
   max-width: 95vw;
-  height: 500px;
+  /* Set a fixed height or max-height to enable internal scrolling */
+  height: 500px; /* Keep your current fixed height */
   border-radius: 18px;
   padding: 32px 40px;
   background: #fff;
@@ -64,7 +67,7 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  overflow: hidden;
+  overflow: hidden; /* Important: Clip content that overflows */
 }
 
 .card-title {
@@ -129,6 +132,45 @@
   border-color: #90caf9 !important;
 }
 
+/* New: Make gantt-content scrollable */
+.gantt-content {
+  flex: 1; /* Allow content to grow and take available space */
+  overflow-y: auto; /* Add vertical scrollbar if content overflows */
+  padding-right: 15px; /* Add some padding to prevent content from touching the scrollbar */
+}
+
+/* New: Make calendar-content scrollable */
+.calendar-content {
+  flex: 1; /* Allow content to grow and take available space */
+  overflow-y: auto; /* Add vertical scrollbar if content overflows */
+  padding-right: 15px; /* Add some padding to prevent content from touching the scrollbar */
+}
+
+
+/* Scrollbar styles for Webkit browsers (Chrome, Safari, Edge) */
+.gantt-content::-webkit-scrollbar,
+.calendar-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gantt-content::-webkit-scrollbar-track,
+.calendar-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.gantt-content::-webkit-scrollbar-thumb,
+.calendar-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.gantt-content::-webkit-scrollbar-thumb:hover,
+.calendar-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+
 .empty-state {
   min-height: 130px;
   padding: 36px 0;
@@ -168,7 +210,7 @@
 
 .analysis-paper {
   margin-top: 18px;
-  height: auto; 
+  height: auto;
 }
 
 .analysis-stat-box {
@@ -190,7 +232,7 @@
 @media (max-width: 1200px) {
   .custom-card {
     width: 95vw;
-    height: auto;
+    height: auto; /* Allow height to adjust on smaller screens if needed, or maintain max-height if content is still scrollable */
   }
 }
 

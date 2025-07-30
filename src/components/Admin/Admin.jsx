@@ -330,6 +330,33 @@ const Admin = ({ authToken }) => {
 
       if (registerResponse.ok) {
         toast.success(registerData.message || 'Thêm nhân viên thành công!');
+        // Step 2: If registration is successful, send verification email
+        if (registerData.account && registerData.account.email) {
+          try {
+            const verifyEmailResponse = await fetch('http://localhost:3000/api/accounts/send-verification', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authToken}`, // Admin's token for this request too
+              },
+              body: JSON.stringify({ email: registerData.account.email }),
+            });
+
+            const verifyEmailData = await verifyEmailResponse.json();
+
+            if (verifyEmailResponse.ok) {
+              console.log('Verification email sent successfully:', verifyEmailData);
+              toast.success('Thêm nhân viên thành công! Vui lòng kiểm tra email của nhân viên để xác thực tài khoản.');
+            } else {
+              console.error('Failed to send verification email:', verifyEmailData);
+              toast.error(verifyEmailData.message || 'Thêm nhân viên thành công nhưng không gửi được email xác thực. Vui lòng thử lại sau.');
+            }
+          } catch (verifyEmailError) {
+            console.error('Network error or unexpected issue when sending verification email:', verifyEmailError);
+            toast.error('Thêm nhân viên thành công nhưng gặp lỗi khi gửi email xác thực. Vui lòng thử lại sau.');
+          }
+        }
+
         // Clear form fields
         setNewEmployeeEmail('');
         setNewEmployeePassword('');

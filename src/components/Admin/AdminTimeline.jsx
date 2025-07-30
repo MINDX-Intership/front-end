@@ -17,10 +17,13 @@ import {
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
-import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Icon cho trạng thái "NOT_STARTED"
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'; // Icon cho trạng thái "IN_PROGRESS"
+import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Icon cho trạng thái "NOTSTARTED"
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'; // Icon cho trạng thái "INPROGRESS"
 import HighlightOffIcon from '@mui/icons-material/HighlightOff'; // Icon cho trạng thái "OVERDUE"
-import DoneAllIcon from '@mui/icons-material/DoneAll'; // Icon cho trạng thái "COMPLETED"
+import DoneAllIcon from '@mui/icons-material/DoneAll'; // Icon cho trạng thái "COMPLETE"
+import AssignmentLateIcon from '@mui/icons-material/AssignmentLate'; // Icon cho "NEEDSREVIEW"
+import PublishIcon from '@mui/icons-material/Publish'; // Icon for "SUBMITTED"
+import PauseCircleFilledIcon from '@mui/icons-material/PauseCircleFilled'; // Icon for "ONHOLD"
 
 
 const AdminTimeline = ({ authToken }) => {
@@ -73,8 +76,8 @@ const AdminTimeline = ({ authToken }) => {
 
   // Tính toán số liệu thống kê cho tab phân tích
   const totalTasks = timelineTasks.length;
-  const completedTasks = timelineTasks.filter(task => task.status === 'COMPLETED').length;
-  const inProgressTasks = timelineTasks.filter(task => task.status === 'IN_PROGRESS').length;
+  const completedTasks = timelineTasks.filter(task => task.status === 'COMPLETE').length;
+  const inProgressTasks = timelineTasks.filter(task => task.status === 'INPROGRESS').length; // Corrected status
   const averageProgress = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(2) : 0;
 
   // Sắp xếp các nhiệm vụ theo ngày tạo mới nhất (hoặc ngày bắt đầu/kết thúc nếu có)
@@ -102,25 +105,40 @@ const AdminTimeline = ({ authToken }) => {
     let label = '';
 
     switch (status) {
-      case 'COMPLETED':
+      case 'COMPLETE':
         icon = <DoneAllIcon fontSize="small" />;
         color = 'success';
         label = 'Hoàn thành';
         break;
-      case 'IN_PROGRESS':
+      case 'INPROGRESS': // Corrected status
         icon = <HourglassEmptyIcon fontSize="small" />;
         color = 'info';
         label = 'Đang thực hiện';
         break;
       case 'NOTSTARTED':
         icon = <AccessTimeIcon fontSize="small" />;
-        color = 'default'; // Hoặc 'secondary'
+        color = 'default';
         label = 'Chưa bắt đầu';
         break;
       case 'OVERDUE':
         icon = <HighlightOffIcon fontSize="small" />;
         color = 'error';
         label = 'Quá hạn';
+        break;
+      case 'SUBMITTED':
+        icon = <PublishIcon fontSize="small" />;
+        color = 'primary';
+        label = 'Đã nộp';
+        break;
+      case 'NEEDSREVIEW':
+        icon = <AssignmentLateIcon fontSize="small" />;
+        color = 'warning';
+        label = 'Cần xem xét';
+        break;
+      case 'ONHOLD':
+        icon = <PauseCircleFilledIcon fontSize="small" />;
+        color = 'secondary';
+        label = 'Tạm dừng';
         break;
       default:
         icon = null;
@@ -204,12 +222,12 @@ const AdminTimeline = ({ authToken }) => {
                             <Typography variant="body2" color="text.secondary">
                               Ngày tạo: {formatDate(task.createdAt)}
                             </Typography>
-                            {task.sprint && (
+                            {task.sprintId && ( // Changed from task.sprint to task.sprintId as per schema
                                 <Typography variant="body2" color="text.secondary">
-                                    Sprint ID: {task.sprint}
+                                    Sprint ID: {task.sprintId}
                                 </Typography>
                             )}
-                             {task.departId && (
+                            {task.departId && (
                                 <Typography variant="body2" color="text.secondary">
                                     Phòng ban ID: {task.departId}
                                 </Typography>
@@ -309,22 +327,26 @@ const AdminTimeline = ({ authToken }) => {
           </Grid>
           {loading && <Typography>Đang tính toán dữ liệu phân tích...</Typography>}
           {error && <Typography color="error">Lỗi: {error}</Typography>}
+          
           {!loading && !error && totalTasks === 0 ? (
             <Box className="empty-state analysis-empty">
               <div className="empty-state-icon">📊</div>
               <div className="empty-state-title">Chưa có dữ liệu để phân tích</div>
               <Typography className="empty-state-caption">
                 Tạo nhiệm vụ để xem biểu đồ phân tích
+                
               </Typography>
+              
+
             </Box>
           ) : (
             <Box className="analysis-content">
+              
               <Typography variant="h6">Dữ liệu phân tích:</Typography>
               <p>Tổng nhiệm vụ: {totalTasks}</p>
               <p>Hoàn thành: {completedTasks}</p>
               <p>Đang thực hiện: {inProgressTasks}</p>
               <p>Tiến độ trung bình: {averageProgress}%</p>
-              {/* Bạn có thể thêm các biểu đồ hoặc thông tin chi tiết khác ở đây */}
             </Box>
           )}
         </Paper>
