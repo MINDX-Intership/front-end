@@ -37,6 +37,9 @@ const validationSchema = Yup.object({
   personalEmail: Yup.string()
     .email('Email không hợp lệ')
     .required('Email cá nhân là bắt buộc'),
+  companyEmail: Yup.string() // Thêm validation cho companyEmail
+    .email('Email công ty không hợp lệ')
+    .required('Email công ty là bắt buộc'),
   name: Yup.string()
     .min(2, 'Họ và tên phải có ít nhất 2 ký tự')
     .required('Họ và tên là bắt buộc'),
@@ -87,6 +90,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
   const formik = useFormik({
     initialValues: {
       personalEmail: '',
+      companyEmail: '', // Thêm trường companyEmail vào initialValues
       name: '',
       phoneNumber: '',
       dob: null,
@@ -97,7 +101,7 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
       // Adjust payload to match backend expectations
       const payload = {
         personalEmail: values.personalEmail,
-        companyEmail: values.personalEmail, // set companyEmail same as personal if required
+        companyEmail: values.companyEmail, // Sử dụng giá trị từ form
         name: values.name,
         phoneNumber: values.phoneNumber,
         dob: values.dob.format('YYYY-MM-DD'),
@@ -160,6 +164,18 @@ const CreateProfile = ({ setCurrentPage, authToken, onProfileCreated }) => {
               onBlur={formik.handleBlur}
               error={formik.touched.personalEmail && Boolean(formik.errors.personalEmail)}
               helperText={formik.touched.personalEmail && formik.errors.personalEmail}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              id="companyEmail" // Thêm trường companyEmail
+              name="companyEmail"
+              label="Email Công Ty"
+              value={formik.values.companyEmail}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.companyEmail && Boolean(formik.errors.companyEmail)}
+              helperText={formik.touched.companyEmail && formik.errors.companyEmail}
               margin="normal"
             />
             <TextField

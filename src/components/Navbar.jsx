@@ -12,14 +12,16 @@ import {
   Info,
   Shield,
   Settings,
-} from "lucide-react"; // Added Settings back
-import { FileText } from "lucide-react"; // Import FileText icon for Documents
+  GitPullRequestDraft, // Import for decentralization icon
+  FolderOpen, // Icon for Projects
+  Bug, // Icon for Incidents
+} from "lucide-react";
+import { FileText } from "lucide-react";
 
-function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
+function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLogout, authToken }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [avatarAnchor, setAvatarAnchor] = useState(false);
   const [workAnchor, setWorkAnchor] = useState(false);
-  const [adminAnchor, setAdminAnchor] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effect
@@ -37,7 +39,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
       if (!event.target.closest(".dropdown-container")) {
         setAvatarAnchor(false);
         setWorkAnchor(false);
-        setAdminAnchor(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -48,7 +49,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
     setCurrentPage(path);
     setAvatarAnchor(false);
     setWorkAnchor(false);
-    setAdminAnchor(false);
   };
 
   const styles = {
@@ -407,6 +407,14 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
     setHoveredStates((prev) => ({ ...prev, [key]: false }));
   };
 
+  // Helper to get initials from email
+  const getInitialsFromEmail = (email) => {
+    if (!email) return "";
+    const parts = email.split("@")[0]; // Get part before @
+    if (parts.length === 0) return "";
+    return parts.slice(0, 2).toUpperCase(); // Take first two characters
+  };
+
   return (
     <nav style={styles.navbar}>
       <div style={styles.container}>
@@ -488,7 +496,15 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                 >
                   Công việc cá nhân
                 </MenuItem>
-                {/* NEW: Add Documents to Work dropdown */}
+                <MenuItem
+                  onClick={() => handleNavLinkClick("/projects")}
+                  icon={FolderOpen}
+                  isHovered={hoveredStates.projects}
+                  onMouseEnter={() => handleMouseEnter("projects")}
+                  onMouseLeave={() => handleMouseLeave("projects")}
+                >
+                  Dự án
+                </MenuItem>
                 <MenuItem
                   onClick={() => handleNavLinkClick("/documents")}
                   icon={FileText}
@@ -497,6 +513,15 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                   onMouseLeave={() => handleMouseLeave("documents")}
                 >
                   Tài liệu
+                </MenuItem>
+                <MenuItem // New menu item for Incidents
+                  onClick={() => handleNavLinkClick("/incidents")}
+                  icon={Bug} // Using Bug as an example icon
+                  isHovered={hoveredStates.incidents}
+                  onMouseEnter={() => handleMouseEnter("incidents")}
+                  onMouseLeave={() => handleMouseLeave("incidents")}
+                >
+                  Sự cố
                 </MenuItem>
               </DropdownMenu>
             </div>
@@ -515,74 +540,9 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
             <Info size={16} />
             Về chúng tôi
           </button>
-
-          {currentUser?.roleTag === "ADMIN" && ( // Changed from !== to ===
-            <div style={styles.dropdown} className="dropdown-container">
-              <button
-                style={{
-                  ...styles.navButton,
-                  ...styles.adminButton,
-                  ...(hoveredStates.admin || adminAnchor
-                    ? styles.adminButtonHover
-                    : {}),
-                }}
-                onMouseEnter={() => {
-                  handleMouseEnter("admin");
-                  setAdminAnchor(true);
-                }}
-                onMouseLeave={() => handleMouseLeave("admin")}
-              >
-                <Shield size={18} />
-                Admin
-                <ChevronDown
-                  size={14}
-                  style={{
-                    ...styles.chevron,
-                    ...(adminAnchor ? styles.chevronRotated : {}),
-                  }}
-                />
-              </button>
-
-              <div
-                onMouseEnter={() => setAdminAnchor(true)}
-                onMouseLeave={() => setAdminAnchor(false)}
-              >
-                <DropdownMenu isOpen={adminAnchor}>
-                  <MenuItem
-                    onClick={() => handleNavLinkClick("/admin")}
-                    icon={User}
-                    isHovered={hoveredStates.adminDashboard}
-                    onMouseEnter={() => handleMouseEnter("adminDashboard")}
-                    onMouseLeave={() => handleMouseLeave("adminDashboard")}
-                  >
-                    Trang quản trị
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => handleNavLinkClick("/admin-report")}
-                    icon={Briefcase}
-                    isHovered={hoveredStates.adminReport}
-                    onMouseEnter={() => handleMouseEnter("adminReport")}
-                    onMouseLeave={() => handleMouseLeave("adminReport")}
-                  >
-                    Báo cáo
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => handleNavLinkClick("/admin-timeline")}
-                    icon={Clock}
-                    isHovered={hoveredStates.adminTimeline}
-                    onMouseEnter={() => handleMouseEnter("adminTimeline")}
-                    onMouseLeave={() => handleMouseLeave("adminTimeline")}
-                  >
-                    Timeline quản trị
-                  </MenuItem>
-                </DropdownMenu>
-              </div>
-            </div>
-          )}
         </div>
 
         <div style={styles.rightSection}>
-          {/* Search Bar */}
           <div style={styles.searchContainer}>
             <input
               type="text"
@@ -599,7 +559,8 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
             <Search size={16} style={styles.searchIcon} />
           </div>
 
-          {currentUser ? (
+          {/* Updated conditional rendering: Check for authToken AND currentAccount */}
+          {authToken && currentAccount ? (
             <>
               {/* Notification Button */}
               <button
@@ -643,13 +604,8 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                   }}
                 >
                   <div style={styles.avatar}>
-                    {currentUser.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
+                    {currentAccount ? getInitialsFromEmail(currentAccount.email) : "NA"}
+                  </div> {/* Use currentAccount if available, otherwise a placeholder */}
                   <ChevronDown
                     size={14}
                     style={{
@@ -665,8 +621,8 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                   style={{ right: 0, left: "auto" }}
                 >
                   <div style={styles.userInfo}>
-                    <p style={styles.userName}>{currentUser.name}</p>
-                    <p style={styles.userEmail}>{currentUser.email}</p>
+                    <p style={styles.userName}>{currentAccount ? currentAccount.email : "Loading..."}</p> {/* Sử dụng email làm tên hiển thị */}
+                    <p style={styles.userEmail}>{currentAccount ? currentAccount.email : "Loading..."}</p>
                   </div>
                   <MenuItem
                     onClick={() => handleNavLinkClick("/profile")}
@@ -677,6 +633,49 @@ function Navbar({ currentPage, setCurrentPage, currentUser, onLogout }) {
                   >
                     Profile
                   </MenuItem>
+
+
+                  {currentAccount && currentAccount.role === "ADMIN" && ( // Check role from currentAccount
+                    <>
+                      <MenuItem
+                        onClick={() => handleNavLinkClick("/admin")}
+                        icon={Shield}
+                        isHovered={hoveredStates.adminDashboard}
+                        onMouseEnter={() => handleMouseEnter("adminDashboard")}
+                        onMouseLeave={() => handleMouseLeave("adminDashboard")}
+                      >
+                        Trang quản trị
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleNavLinkClick("/admin-report")}
+                        icon={Briefcase}
+                        isHovered={hoveredStates.adminReport}
+                        onMouseEnter={() => handleMouseEnter("adminReport")}
+                        onMouseLeave={() => handleMouseLeave("adminReport")}
+                      >
+                        Báo cáo
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleNavLinkClick("/admin-timeline")}
+                        icon={Clock}
+                        isHovered={hoveredStates.adminTimeline}
+                        onMouseEnter={() => handleMouseEnter("adminTimeline")}
+                        onMouseLeave={() => handleMouseLeave("adminTimeline")}
+                      >
+                        Timeline quản trị
+                      </MenuItem>
+                       <MenuItem // New menu item for Admin Decentralization
+                        onClick={() => handleNavLinkClick("/admin-decentralization")}
+                        icon={GitPullRequestDraft} // Using GitPullRequestDraft as an example icon
+                        isHovered={hoveredStates.adminDecentralization}
+                        onMouseEnter={() => handleMouseEnter("adminDecentralization")}
+                        onMouseLeave={() => handleMouseLeave("adminDecentralization")}
+                      >
+                        Phân quyền
+                      </MenuItem>
+                    </>
+                  )}
+
                   <MenuItem
                     onClick={() => {
                       onLogout();

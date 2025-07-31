@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     CircularProgress, Typography, Box, Paper, List, ListItem, ListItemText, Button,
     IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
@@ -7,8 +7,10 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
-import SaveIcon from '@mui/icons-material/Save'; // Import SaveIcon
-import CloseIcon from '@mui/icons-material/Close'; // Import CloseIcon
+import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // Import CloudUploadIcon
+import AttachFileIcon from '@mui/icons-material/AttachFile'; // Import AttachFileIcon for displaying file link
 import { toast } from 'react-toastify';
 
 // Styled components consistent with SprintsPage.jsx
@@ -212,7 +214,9 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [documentToDelete, setDocumentToDelete] = useState(null);
     const [openEditDialog, setOpenEditDialog] = useState(false);
-    const [currentDocument, setCurrentDocument] = useState({ title: '', content: '' });
+    const [currentDocument, setCurrentDocument] = useState({ title: '', content: '', fileUrl: '' });
+    const [selectedFile, setSelectedFile] = useState(null); // New state for selected file
+    const fileInputRef = useRef(null); // Ref for the hidden file input
     const [showContentAfterDelay, setShowContentAfterDelay] = useState(false); // New state for delay
 
     // Function to format date (DD/MM/YYYY)
@@ -322,11 +326,13 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
 
     // Handle edit dialog open
     const handleEditClick = (document) => {
-        // If it's a new document, ensure _id is not present
+        // If it's a new document, ensure _id is not present and reset file states
         if (!document._id) {
-            setCurrentDocument({ title: '', content: '' });
+            setCurrentDocument({ title: '', content: '', fileUrl: '' });
+            setSelectedFile(null);
         } else {
             setCurrentDocument(document);
+            setSelectedFile(null); // Clear selected file when editing existing document
         }
         setOpenEditDialog(true);
     };
@@ -334,7 +340,8 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
     // Handle edit dialog close
     const handleCloseEditDialog = () => {
         setOpenEditDialog(false);
-        setCurrentDocument({title: '', content: '' });
+        setCurrentDocument({title: '', content: '', fileUrl: '' });
+        setSelectedFile(null); // Clear selected file on dialog close
     };
 
     // Handle input change for edit/create form
@@ -343,12 +350,85 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
         setCurrentDocument(prev => ({ ...prev, [name]: value }));
     };
 
+    // Handle file selection
+    const handleFileChange = (event) => {
+        if (event.target.files && event.target.files[0]) {
+            setSelectedFile(event.target.files[0]);
+        }
+    };
+
+    // Clear selected file
+    const handleClearFile = () => {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''; // Clear the file input element
+        }
+        setCurrentDocument(prev => ({ ...prev, fileUrl: '' })); // Clear fileUrl from currentDocument
+    };
+
     // Handle save (create/update) document
     const handleSaveDocument = async () => {
-        // Create a new object for the payload, explicitly excluding _id for new documents
+        let finalFileUrl = currentDocument.fileUrl; // Start with existing fileUrl
+
+        // If a new file is selected, upload it first
+        if (selectedFile) {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            if (currentDocument.title) {
+                formData.append('title', currentDocument.title);
+            }
+            if (currentDocument.content) {
+                formData.append('content', currentDocument.content);
+            }
+
+try {
+            const uploadResponse = await fetch('http://localhost:3000/api/documents/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: formData,
+            });
+
+            // --- ADD THESE CONSOLE LOGS ---
+            console.log('Upload Response Status:', uploadResponse.status);
+            console.log('Upload Response Headers:', uploadResponse.headers);
+
+            // Check if the response is actually JSON before trying to parse
+            const contentType = uploadResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const uploadData = await uploadResponse.json();
+                console.log('Upload Response Data (JSON):', uploadData);
+
+                if (uploadResponse.ok) {
+                    finalFileUrl = uploadData.fileUrl;
+                    toast.success('File đã được tải lên thành công!');
+                } else {
+                    toast.error(uploadData.message || 'Lỗi khi tải file lên.');
+                    console.error('Upload file error (JSON response):', uploadData);
+                    return;
+                }
+            } else {
+                // If not JSON, read as text to see the HTML content
+                const errorText = await uploadResponse.text();
+                console.error('Upload file error (Non-JSON response):', errorText);
+                toast.error('Lỗi server: Phản hồi không hợp lệ. Vui lòng kiểm tra console.');
+                return; // Stop if response is not JSON
+            }
+            // --- END ADDED CONSOLE LOGS ---
+
+        } catch (err) {
+            toast.error('Lỗi kết nối khi tải file lên.');
+            console.error('Upload file network error:', err);
+            return;
+        }
+        }
+
+        // Prepare payload for document creation/update
         const payload = {
             title: currentDocument.title,
-            content: currentDocument.content
+            content: currentDocument.content,
+            fileUrl: finalFileUrl // Use the new fileUrl if uploaded, otherwise existing or empty
         };
 
         const url = currentDocument._id
@@ -363,7 +443,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                 },
-                body: JSON.stringify(payload), // Send the payload without _id for new documents
+                body: JSON.stringify(payload),
             });
 
             const data = await response.json();
@@ -436,7 +516,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
                         </Typography>
                         <CreateButton
                             startIcon={<AddIcon />}
-                            onClick={() => handleEditClick({title: '', content: '' })}
+                            onClick={() => handleEditClick({title: '', content: '', fileUrl: '' })}
                         >
                             Tạo Tài liệu Mới
                         </CreateButton>
@@ -461,7 +541,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
                             </Typography>
                             <CreateButton
                                 startIcon={<AddIcon />}
-                                onClick={() => handleEditClick({title: '', content: '' })}
+                                onClick={() => handleEditClick({title: '', content: '', fileUrl: '' })}
                             >
                                 Tạo Tài liệu Đầu Tiên
                             </CreateButton>
@@ -484,6 +564,18 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
                                                 <DocumentContent>
                                                     {document.content || 'Không có nội dung'}
                                                 </DocumentContent>
+                                                {document.fileUrl && (
+                                                    <Box sx={{ marginBottom: '8px' }}>
+                                                        <Chip
+                                                            icon={<AttachFileIcon />}
+                                                            label="Xem File đính kèm"
+                                                            onClick={() => window.open(`http://localhost:3000${document.fileUrl}`, '_blank')}
+                                                            color="primary"
+                                                            variant="outlined"
+                                                            sx={{ cursor: 'pointer' }}
+                                                        />
+                                                    </Box>
+                                                )}
                                             </Box>
                                             <ActionButtons>
                                                 <ActionIconButton
@@ -609,7 +701,41 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
                         variant="outlined"
                         value={currentDocument.content}
                         onChange={handleInputChange}
+                        sx={{ marginBottom: '16px' }}
                     />
+
+                    {/* File Upload Section */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
+                        />
+                        <Button
+                            variant="outlined"
+                            startIcon={<CloudUploadIcon />}
+                            onClick={() => fileInputRef.current.click()}
+                            sx={{
+                                borderRadius: '8px',
+                                padding: '10px 20px',
+                                textTransform: 'none',
+                                flexShrink: 0
+                            }}
+                        >
+                            Chọn File
+                        </Button>
+                        {(selectedFile || currentDocument.fileUrl) && (
+                            <Chip
+                                label={selectedFile ? selectedFile.name : currentDocument.fileUrl.split('/').pop()}
+                                onDelete={handleClearFile}
+                                color="info"
+                                variant="outlined"
+                                sx={{ flexGrow: 1, maxWidth: 'calc(100% - 150px)' }}
+                            />
+                        )}
+                    </Box>
+
                 </DialogContent>
                 <DialogActions sx={{ padding: '16px 24px' }}>
                     <Button

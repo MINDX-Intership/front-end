@@ -11,29 +11,274 @@ import {
   MenuItem,
   CircularProgress,
   useTheme,
-  Card,
-  CardContent,
   Chip,
   Avatar,
   Divider,
   IconButton,
-  FormControl, // Import FormControl for select
-  InputLabel,   // Import InputLabel for select
-  Select,      // Import Select for multi-select
-  OutlinedInput, // Import OutlinedInput for multi-select
+  FormControl,
+  InputLabel,
+  Select,
+  OutlinedInput,
+  styled,
+  Paper,
+  Grid,
+  List, // Import List for popup
+  ListItem, // Import ListItem for popup
+  ListItemAvatar, // Import ListItemAvatar for popup
+  ListItemText, // Import ListItemText for popup
 } from "@mui/material";
-import { 
+import {
   AddCircleOutline as AddCircleOutlineIcon,
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
   Assignment as TaskIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Info as InfoIcon, // For assignees popup
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 const API_BASE_URL = "http://localhost:3000/api";
 const LOADING_DELAY_MS = 1000;
+
+// Styled Components (Adapted from SprintsPage.jsx)
+const Root = styled(Box)({
+  minHeight: '100vh',
+  background: 'white',
+  padding: '24px',
+});
+
+const MainContainer = styled(Paper)({
+  maxWidth: '1000px',
+  margin: '0 auto',
+  borderRadius: '24px',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+  overflow: 'hidden',
+});
+
+const Header = styled(Box)({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: '48px 32px',
+  textAlign: 'center',
+  color: 'white',
+});
+
+const HeaderTitle = styled(Typography)({
+  fontSize: '2.5rem',
+  fontWeight: 700,
+  marginBottom: '16px',
+  textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+});
+
+const HeaderSubtitle = styled(Typography)({
+  fontSize: '1.2rem',
+  opacity: 0.9,
+});
+
+const ContentContainer = styled(Box)({
+  padding: '32px',
+});
+
+const ActionBar = styled(Box)({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '32px',
+  gap: '16px',
+  flexWrap: 'wrap', // Allow wrapping on smaller screens
+});
+
+const CreateButton = styled(Button)({
+  borderRadius: '12px',
+  padding: '12px 32px',
+  fontSize: '1.1rem',
+  fontWeight: 600,
+  textTransform: 'none',
+  background: 'white',
+  boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+  transition: 'all 0.3s ease',
+  color: '#667eea', // Text color to match gradient
+  '&:hover': {
+    background: 'white',
+    boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)',
+    transform: 'translateY(-2px)',
+  },
+});
+
+const TaskCard = styled(Paper)({
+  margin: '16px 0',
+  borderRadius: '16px',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  border: '1px solid rgba(102, 126, 234, 0.1)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    transform: 'translateY(-2px)',
+    borderColor: 'rgba(102, 126, 234, 0.2)',
+  },
+});
+
+const TaskTitle = styled(Typography)({
+  fontSize: '1.4rem',
+  fontWeight: 700,
+  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  marginBottom: '8px',
+});
+
+const TaskDescription = styled(Typography)({
+  color: '#6c757d',
+  fontSize: '1rem',
+  lineHeight: 1.6,
+  marginBottom: '16px',
+});
+
+const DateInfo = styled(Typography)({
+  color: '#495057',
+  fontSize: '0.95rem',
+  fontWeight: 500,
+  marginBottom: '4px',
+});
+
+const StyledChip = styled(Chip)(({ customstatus, custompriority }) => ({
+  borderRadius: '20px',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  height: '32px',
+  // Status specific colors
+  ...(customstatus === 'notstarted' && {
+    background: 'linear-gradient(45deg, #6c757d, #495057)', // default
+    color: 'white',
+  }),
+  ...(customstatus === 'inprogress' && {
+    background: 'linear-gradient(45deg, #007bff, #6f42c1)', // info
+    color: 'white',
+  }),
+  ...(customstatus === 'complete' && {
+    background: 'linear-gradient(45deg, #28a745, #20c997)', // success
+    color: 'white',
+  }),
+  ...(customstatus === 'submitted' && {
+    background: 'linear-gradient(45deg, #17a2b8, #007bff)', // primary (adjusted for contrast)
+    color: 'white',
+  }),
+  ...(customstatus === 'needsreview' && {
+    background: 'linear-gradient(45deg, #ffc107, #fd7e14)', // warning
+    color: 'white',
+  }),
+  ...(customstatus === 'overdue' && {
+    background: 'linear-gradient(45deg, #dc3545, #c82333)', // error
+    color: 'white',
+  }),
+  ...(customstatus === 'onhold' && {
+    background: 'linear-gradient(45deg, #ffc107, #fd7e14)', // warning
+    color: 'white',
+  }),
+  // Priority specific colors
+  ...(custompriority === 'low' && {
+    background: 'linear-gradient(45deg, #6c757d, #495057)', // default
+    color: 'white',
+  }),
+  ...(custompriority === 'medium' && {
+    background: 'linear-gradient(45deg, #007bff, #6f42c1)', // info
+    color: 'white',
+  }),
+  ...(custompriority === 'high' && {
+    background: 'linear-gradient(45deg, #ffc107, #dc3545)', // warning (adjusted for high priority)
+    color: 'white',
+  }),
+}));
+
+const ActionButtons = styled(Box)({
+  display: 'flex',
+  gap: '8px',
+});
+
+const ActionIconButton = styled(IconButton)(({ customcolor }) => ({
+  borderRadius: '10px',
+  padding: '8px',
+  transition: 'all 0.3s ease',
+  ...(customcolor === 'delete' && {
+    color: '#dc3545',
+    '&:hover': {
+      backgroundColor: 'rgba(220, 53, 69, 0.1)',
+      transform: 'scale(1.1)',
+    },
+  }),
+  ...(customcolor === 'edit' && {
+    color: '#667eea',
+    '&:hover': {
+      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+      transform: 'scale(1.1)',
+    },
+  }),
+}));
+
+const EmptyState = styled(Paper)({
+  padding: '64px 32px',
+  textAlign: 'center',
+  borderRadius: '16px',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+  border: '2px dashed rgba(102, 126, 234, 0.3)',
+});
+
+const EmptyStateIcon = styled(Box)({
+  fontSize: '4rem',
+  marginBottom: '24px',
+  opacity: 0.5,
+});
+
+const LoadingContainer = styled(Box)({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  minHeight: '100vh',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+});
+
+const LoadingContent = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '24px',
+  padding: '48px',
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  borderRadius: '24px',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+});
+
+const StyledDialog = styled(Dialog)({
+  '& .MuiDialog-paper': {
+    borderRadius: '16px',
+    padding: '8px',
+  },
+});
+
+const DialogButton = styled(Button)(({ variant }) => ({
+  borderRadius: '8px',
+  padding: '8px 24px',
+  fontWeight: 600,
+  textTransform: 'none',
+  ...(variant === 'primary' && {
+    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+    color: 'white',
+    '&:hover': {
+      background: 'linear-gradient(45deg, #764ba2, #667eea)',
+    },
+  }),
+  ...(variant === 'delete' && {
+    background: 'linear-gradient(45deg, #dc3545, #c82333)',
+    color: 'white',
+    '&:hover': {
+      background: 'linear-gradient(45deg, #c82333, #a71e2a)',
+    },
+  }),
+}));
+
 
 function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
   const [openForm, setOpenForm] = useState(false);
@@ -63,8 +308,12 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
 
   // New state for users and selected assignees
   const [users, setUsers] = useState([]);
-  const [editSelectedAssignees, setEditSelectedAssignees] = useState([]); 
+  const [editSelectedAssignees, setEditSelectedAssignees] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+
+  // State for assignees popup
+  const [openAssigneesPopup, setOpenAssigneesPopup] = useState(false);
+  const [currentAssigneesForPopup, setCurrentAssigneesForPopup] = useState([]);
 
   const theme = useTheme();
 
@@ -292,10 +541,6 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
 
   // --- Delete Task ---
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa task này không?")) {
-      return;
-    }
-
     if (!authToken) {
       toast.error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       return;
@@ -330,12 +575,10 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
     setEditingTask(task);
     setEditTaskTitle(task.title);
     setEditTaskDescription(task.description || "");
-    setEditSelectedSprintId(task.sprintId?._id || ""); 
-    setEditSelectedDepartId(task.departId?._id || ""); 
+    setEditSelectedSprintId(task.sprintId?._id || "");
+    setEditSelectedDepartId(task.departId?._id || "");
     setEditTaskStatus(task.status || "NOTSTARTED");
     setEditTaskPriority(task.priority || "MEDIUM");
-    // Set selected assignees for the edit form
-    // task.assignees is an array of populated user objects. We need their IDs.
     setEditSelectedAssignees(task.assignees?.map(assignee => assignee._id) || []);
     setOpenEditForm(true);
   };
@@ -413,89 +656,60 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
     );
   };
 
+  // Handle opening assignees popup
+  const handleOpenAssigneesPopup = (assignees) => {
+    setCurrentAssigneesForPopup(assignees);
+    setOpenAssigneesPopup(true);
+  };
+
+  // Handle closing assignees popup
+  const handleCloseAssigneesPopup = () => {
+    setOpenAssigneesPopup(false);
+    setCurrentAssigneesForPopup([]);
+  };
+
   // Combine loading states for initial render
   if (loadingSprints || loadingDepartments || loadingMyTasks || loadingUsers) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          height: "80vh",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress color="primary" />
-        <Typography
-          variant="h6"
-          sx={{ mt: 2, color: theme.palette.text.secondary }}
-        >
-          Đang tải dữ liệu...
-        </Typography>
-      </Box>
+      <LoadingContainer>
+        <LoadingContent>
+          <CircularProgress size={48} sx={{ color: '#667eea' }} />
+          <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600 }}>
+            Đang tải dữ liệu...
+          </Typography>
+        </LoadingContent>
+      </LoadingContainer>
     );
   }
 
   // Handle errors for any fetch operation after initial load attempt
   if (error) {
     return (
-      <Box
-        sx={{
-          p: 2,
-          textAlign: "center",
-          bgcolor: theme.palette.background.paper,
-          borderRadius: 2,
-          m: 2,
-        }}
-      >
-        <Typography variant="h6" color="error" sx={{ mb: 1 }}>
-          Đã xảy ra lỗi: {error.message || "Lỗi không xác định"}
-        </Typography>
-        <Button variant="contained" onClick={() => {
-          setError(null);
-          fetchSprints();
-          fetchDepartments();
-          fetchMyTasks();
-          fetchUsers();
-        }} sx={{ mt: 2 }}>
-          Thử lại
-        </Button>
-      </Box>
+      <LoadingContainer>
+        <LoadingContent>
+          <Typography color="error" variant="h6" sx={{ marginBottom: 3 }}>
+            Đã xảy ra lỗi: {error.message || "Lỗi không xác định"}
+          </Typography>
+          <CreateButton onClick={() => {
+            setError(null);
+            fetchSprints();
+            fetchDepartments();
+            fetchMyTasks();
+            fetchUsers();
+          }}>
+            Thử lại
+          </CreateButton>
+        </LoadingContent>
+      </LoadingContainer>
     );
   }
 
-  const getStatusChipColor = (status) => {
-    switch (status?.toUpperCase()) {
-      case "NOTSTARTED":
-        return "default";
-      case "INPROGRESS":
-        return "info";
-      case "COMPLETE":
-        return "success";
-      case "SUBMITTED":
-        return "primary";
-      case "NEEDSREVIEW":
-        return "warning";
-      case "OVERDUE":
-        return "error";
-      case "ONHOLD":
-        return "warning";
-      default:
-        return "default";
-    }
+  const getStatusChipValue = (status) => {
+    return status?.toLowerCase(); // Return lowercase status for customprop
   };
 
-  const getPriorityChipColor = (priority) => {
-    switch (priority?.toUpperCase()) {
-      case "LOW":
-        return "default";
-      case "MEDIUM":
-        return "info";
-      case "HIGH":
-        return "warning";
-      default:
-        return "default";
-    }
+  const getPriorityChipValue = (priority) => {
+    return priority?.toLowerCase(); // Return lowercase priority for customprop
   };
 
   const formatVietnameseDate = (dateString) => {
@@ -505,261 +719,204 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
     const day = date.getDate();
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    
+
     return `${hours}:${minutes}, ${day}/${month}/${year}`;
   };
 
   return (
-    <Box sx={{ p: 2, maxWidth: 900, margin: "auto", mt: 2 }}>
-      {/* Header Section */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography
-          variant="h3"
-          gutterBottom
-          sx={{ fontWeight: "bold", color: theme.palette.primary.main, mb: 2 }}
-        >
-          Quản lý Task Cá Nhân
-        </Typography>
+    <Root>
+      <MainContainer elevation={0}>
+        <Header>
+          <HeaderTitle variant="h3">
+            Quản lý Task Cá Nhân
+          </HeaderTitle>
+          <HeaderSubtitle variant="h6">
+            Theo dõi và quản lý các công việc của bạn
+          </HeaderSubtitle>
+        </Header>
 
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddCircleOutlineIcon />}
-          onClick={handleOpenForm}
-          sx={{ 
-            borderRadius: 3, 
-            py: 1.8, 
-            px: 4, 
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-          }}
-        >
-          Tạo Task Mới
-        </Button>
-      </Box>
+        <ContentContainer>
+          <ActionBar>
+            <Typography variant="h5" sx={{
+              fontWeight: 600,
+              background: 'linear-gradient(45deg, #667eea, #764ba2)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Các Task của bạn ({myTasks.length})
+            </Typography>
+            <CreateButton
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={handleOpenForm}
+            >
+              Tạo Task Mới
+            </CreateButton>
+          </ActionBar>
 
-      {/* Tasks Section */}
-      <Box>
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
-          Các Task của bạn
-        </Typography>
-        {myTasks.length === 0 ? (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 6,
-              bgcolor: theme.palette.background.default,
-              borderRadius: 3,
-              border: `2px dashed ${theme.palette.divider}`,
-            }}
-          >
-            <TaskIcon sx={{ fontSize: 80, color: theme.palette.text.disabled, mb: 2 }} />
-            <Typography variant="h5" color="text.disabled" sx={{ mb: 1 }}>
-              Bạn chưa có task nào
-            </Typography>
-            <Typography variant="h6" color="text.disabled">
-              Hãy tạo một task mới để bắt đầu!
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            {myTasks.map((task) => (
-              <Card
-                key={task._id}
-                sx={{
-                  borderRadius: 3,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  transition: "all 0.3s ease",
-                  border: `1px solid ${theme.palette.divider}`,
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                    borderColor: theme.palette.primary.main,
-                  },
-                }}
+          {myTasks.length === 0 ? (
+            <EmptyState elevation={0}>
+              <EmptyStateIcon>
+                <TaskIcon sx={{ fontSize: '4rem', color: theme.palette.text.disabled }} />
+              </EmptyStateIcon>
+              <Typography variant="h5" sx={{
+                fontWeight: 600,
+                marginBottom: 2,
+                color: '#6c757d'
+              }}>
+                Bạn chưa có task nào
+              </Typography>
+              <Typography variant="body1" sx={{
+                color: '#6c757d',
+                marginBottom: 3,
+                fontSize: '1.1rem'
+              }}>
+                Hãy tạo một task mới để bắt đầu!
+              </Typography>
+              <CreateButton
+                startIcon={<AddCircleOutlineIcon />}
+                onClick={handleOpenForm}
               >
-                <CardContent sx={{ p: 3 }}>
-                  {/* Title and Status Row */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography 
-                      variant="h4" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 'bold',
-                        color: theme.palette.text.primary,
-                        flex: 1,
-                        textAlign: 'left',
-                        mr: 3
-                      }}
-                    >
-                      {task.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                      <Chip
-                        label={task.status?.toUpperCase().replace(/_/g, ' ')}
-                        color={getStatusChipColor(task.status)}
-                        sx={{ 
-                          fontWeight: 'bold',
-                          fontSize: '1rem',
-                          height: 40,
-                          '& .MuiChip-label': { px: 3, py: 1 }
-                        }}
-                      />
-                      <Chip
-                        label={`${task.priority?.toUpperCase()}`}
-                        color={getPriorityChipColor(task.priority)}
-                        sx={{ 
-                          fontWeight: 'bold',
-                          fontSize: '1rem',
-                          height: 40,
-                          '& .MuiChip-label': { px: 3, py: 1 }
-                        }}
-                      />
-                      {/* Edit Button */}
-                      <IconButton 
-                        aria-label="edit task" 
-                        onClick={() => handleOpenEditForm(task)}
-                        color="primary"
-                        sx={{
-                          border: `1px solid ${theme.palette.primary.main}`,
-                          '&:hover': {
-                            bgcolor: 'primary.light',
-                            color: 'white',
-                          }
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDeleteTask(task._id)}
-                        disabled={deletingTaskId === task._id}
-                        startIcon={
-                          deletingTaskId === task._id ? (
-                            <CircularProgress size={16} />
-                          ) : (
-                            <DeleteIcon />
-                          )
-                        }
-                        sx={{
-                          minWidth: 44,
-                          height: 40,
-                          borderRadius: 2,
-                          '&:hover': {
-                            bgcolor: 'error.light',
-                            color: 'white',
-                            borderColor: 'error.main'
-                          }
-                        }}
-                      >
-                        {deletingTaskId === task._id ? '' : ''}
-                      </Button>
-                    </Box>
-                  </Box>
+                Tạo Task Đầu Tiên
+              </CreateButton>
+            </EmptyState>
+          ) : (
+            <Box>
+              {myTasks.map((task) => {
+                // Find department title
+                const department = departments.find(dep => dep._id === task.departId);
+                const departmentTitle = department ? department.title : "N/A";
 
-                  {/* Description Row */}
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontWeight: 'bold',
-                        minWidth: 80,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      Mô tả:
-                    </Typography>
-                    <Typography 
-                      variant="h6" 
-                      color="text.secondary" 
-                      sx={{ 
-                        flex: 1,
-                        lineHeight: 1.4,
-                        bgcolor: theme.palette.action.hover,
-                        p: 2,
-                        borderRadius: 2,
-                        borderLeft: `4px solid ${theme.palette.primary.main}`
-                      }}
-                    >
-                      {task.description || "Không có mô tả."}
-                    </Typography>
-                  </Box>
-
-                  {/* Info Section */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-around',
-                    alignItems: 'center',
-                    bgcolor: theme.palette.background.default,
-                    p: 2.5,
-                    borderRadius: 2,
-                    gap: 3
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
-                      <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 40, height: 40 }}>
-                        <PersonIcon sx={{ fontSize: 24 }} />
-                      </Avatar>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
-                          Tạo bởi
-                        </Typography>
-                        <Typography variant="h6" fontWeight="bold">
-                          {task.createdBy?.name || "N/A"}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Divider orientation="vertical" flexItem />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
-                      <Avatar sx={{ bgcolor: theme.palette.secondary.main, width: 40, height: 40 }}>
-                        <CalendarIcon sx={{ fontSize: 24 }} />
-                      </Avatar>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
-                          Ngày tạo
-                        </Typography>
-                        <Typography variant="h6" fontWeight="bold">
-                          {formatVietnameseDate(task.createdAt)}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {task.assignees && task.assignees.length > 0 && (
-                      <>
-                        <Divider orientation="vertical" flexItem />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, justifyContent: 'center' }}>
-                          <Avatar sx={{ bgcolor: theme.palette.success.main, width: 40, height: 40 }}>
-                            <PersonIcon sx={{ fontSize: 24 }} />
-                          </Avatar>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.9rem' }}>
-                              Người được giao
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                              {task.assignees.map(a => a.name).join(', ')}
-                            </Typography>
-                          </Box>
+                return (
+                  <TaskCard key={task._id} elevation={0}>
+                    <Box sx={{ padding: '24px' }}>
+                      <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '16px',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                      }}>
+                        <Box sx={{ flex: 1, minWidth: '200px' }}>
+                          <TaskTitle>
+                            {task.title}
+                          </TaskTitle>
+                          <TaskDescription>
+                            {task.description || "Không có mô tả."}
+                          </TaskDescription>
                         </Box>
-                      </>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        )}
-      </Box>
+                        <ActionButtons>
+                          <StyledChip
+                            label={task.status?.toUpperCase().replace(/_/g, ' ')}
+                            customstatus={getStatusChipValue(task.status)}
+                            size="medium"
+                          />
+                          <StyledChip
+                            label={`${task.priority?.toUpperCase()}`}
+                            custompriority={getPriorityChipValue(task.priority)}
+                            size="medium"
+                          />
+                          <ActionIconButton
+                            customcolor="edit"
+                            aria-label="edit task"
+                            onClick={() => handleOpenEditForm(task)}
+                          >
+                            <EditIcon />
+                          </ActionIconButton>
+                          <ActionIconButton
+                            customcolor="delete"
+                            aria-label="delete task"
+                            onClick={() => handleDeleteTask(task._id)}
+                            disabled={deletingTaskId === task._id}
+                          >
+                            {deletingTaskId === task._id ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <DeleteIcon />
+                            )}
+                          </ActionIconButton>
+                        </ActionButtons>
+                      </Box>
+
+                      <Grid container spacing={2} sx={{ marginBottom: '16px' }}>
+                        <Grid item xs={12} sm={6}>
+                          <DateInfo>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 24, height: 24 }}>
+                                <PersonIcon sx={{ fontSize: 16 }} />
+                              </Avatar>
+                              Tạo bởi: {task.createdBy?.name || "N/A"}
+                            </Box>
+                          </DateInfo>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <DateInfo>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ bgcolor: theme.palette.secondary.main, width: 24, height: 24 }}>
+                                <CalendarIcon sx={{ fontSize: 16 }} />
+                              </Avatar>
+                              Ngày tạo: {formatVietnameseDate(task.createdAt)}
+                            </Box>
+                          </DateInfo>
+                        </Grid>
+                        {task.assignees && task.assignees.length > 0 && (
+                          <Grid item xs={12} sm={6}>
+                            <DateInfo sx={{ cursor: 'pointer' }} onClick={() => handleOpenAssigneesPopup(task.assignees)}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ bgcolor: theme.palette.success.main, width: 24, height: 24 }}>
+                                  <PersonIcon sx={{ fontSize: 16 }} />
+                                </Avatar>
+                                Người được giao: {task.assignees.length} người <InfoIcon sx={{ fontSize: 16, ml: 0.5 }} />
+                              </Box>
+                            </DateInfo>
+                          </Grid>
+                        )}
+                        {task.departId && (
+                          <Grid item xs={12} sm={6}>
+                            <DateInfo>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ bgcolor: theme.palette.info.main, width: 24, height: 24 }}>
+                                  <TaskIcon sx={{ fontSize: 16 }} />
+                                </Avatar>
+                                Phòng ban: {departmentTitle}
+                              </Box>
+                            </DateInfo>
+                          </Grid>
+                        )}
+                        {task.sprintId && (
+                          <Grid item xs={12} sm={6}>
+                            <DateInfo>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ bgcolor: theme.palette.warning.main, width: 24, height: 24 }}>
+                                  <CalendarIcon sx={{ fontSize: 16 }} />
+                                </Avatar>
+                                Sprint: {task.sprintId?.title || "N/A"}
+                              </Box>
+                            </DateInfo>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
+                  </TaskCard>
+                );
+              })}
+            </Box>
+          )}
+        </ContentContainer>
+      </MainContainer>
 
       {/* Dialog for Creating New Task */}
-      <Dialog open={openForm} onClose={handleCloseForm} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: "white" }}>
+      <StyledDialog open={openForm} onClose={handleCloseForm} fullWidth maxWidth="sm">
+        <DialogTitle sx={{
+          fontSize: '1.3rem',
+          fontWeight: 600,
+          color: 'white',
+          background: 'linear-gradient(45deg, #667eea, #764ba2)',
+        }}>
           Tạo Task Mới
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ padding: '24px' }}>
           <TextField
             autoFocus
             label="Tiêu đề Task"
@@ -819,28 +976,37 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
             sx={{ mb: 2 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseForm} color="secondary" variant="outlined">
+        <DialogActions sx={{ padding: '16px 24px' }}>
+          <Button onClick={handleCloseForm} color="secondary" variant="outlined" sx={{
+            borderRadius: '8px',
+            padding: '8px 24px',
+            fontWeight: 600,
+            textTransform: 'none'
+          }}>
             Hủy
           </Button>
-          <Button
+          <DialogButton
+            variant="primary"
             onClick={handleCreateTask}
-            color="primary"
-            variant="contained"
             disabled={loadingTaskCreation}
             startIcon={loadingTaskCreation ? <CircularProgress size={20} /> : null}
           >
             {loadingTaskCreation ? "Đang tạo..." : "Tạo Task"}
-          </Button>
+          </DialogButton>
         </DialogActions>
-      </Dialog>
+      </StyledDialog>
 
       {/* Dialog for Editing Task */}
-      <Dialog open={openEditForm} onClose={handleCloseEditForm} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: "white" }}>
+      <StyledDialog open={openEditForm} onClose={handleCloseEditForm} fullWidth maxWidth="sm">
+        <DialogTitle sx={{
+          fontSize: '1.3rem',
+          fontWeight: 600,
+          color: 'white',
+          background: 'linear-gradient(45deg, #667eea, #764ba2)',
+        }}>
           Chỉnh sửa Task
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ padding: '24px' }}>
           <TextField
             autoFocus
             label="Tiêu đề Task"
@@ -890,7 +1056,7 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
               ))
             )}
           </TextField>
-          {/* New: Assignees Multi-select */}
+          {/* Assignees Multi-select */}
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="assignees-label">Người được giao</InputLabel>
             <Select
@@ -961,22 +1127,67 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
             sx={{ mb: 2 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditForm} color="secondary" variant="outlined">
+        <DialogActions sx={{ padding: '16px 24px' }}>
+          <Button onClick={handleCloseEditForm} color="secondary" variant="outlined" sx={{
+            borderRadius: '8px',
+            padding: '8px 24px',
+            fontWeight: 600,
+            textTransform: 'none'
+          }}>
             Hủy
           </Button>
-          <Button
+          <DialogButton
+            variant="primary"
             onClick={handleUpdateTask}
-            color="primary"
-            variant="contained"
             disabled={loadingTaskUpdate}
             startIcon={loadingTaskUpdate ? <CircularProgress size={20} /> : null}
           >
             {loadingTaskUpdate ? "Đang cập nhật..." : "Cập nhật Task"}
+          </DialogButton>
+        </DialogActions>
+      </StyledDialog>
+
+      {/* Dialog for displaying Assignees */}
+      <StyledDialog open={openAssigneesPopup} onClose={handleCloseAssigneesPopup} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{
+          fontSize: '1.3rem',
+          fontWeight: 600,
+          color: 'white',
+          background: 'linear-gradient(45deg, #667eea, #764ba2)',
+        }}>
+          Danh sách Người được giao
+        </DialogTitle>
+        <DialogContent sx={{ padding: '16px' }}>
+          {currentAssigneesForPopup.length > 0 ? (
+            <List>
+              {currentAssigneesForPopup.map((assignee) => (
+                <ListItem key={assignee._id}>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                      <PersonIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={assignee.name} secondary={assignee.personalEmail} />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+              Không có người được giao.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ padding: '8px 16px' }}>
+          <Button onClick={handleCloseAssigneesPopup} color="secondary" variant="outlined" sx={{
+            borderRadius: '8px',
+            fontWeight: 600,
+            textTransform: 'none'
+          }}>
+            Đóng
           </Button>
         </DialogActions>
-      </Dialog>
-    </Box>
+      </StyledDialog>
+    </Root>
   );
 }
 

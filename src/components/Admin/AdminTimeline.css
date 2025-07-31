@@ -1,5 +1,3 @@
-/* AdminTimeline.css */
-
 .admin-timeline-root {
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
   min-height: 100vh;
@@ -11,38 +9,52 @@
 }
 
 .tab-container {
-  margin-bottom: 28px;
+  max-width: 920px; /* Giống với container chính */
+  margin: 0 auto 28px;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .simple-tabs {
+  max-width: 100%;
   background: #fff;
-  border-radius: 0;
-  box-shadow: none;
-  max-width: 400px;
-  margin: 0 auto;
+  border: 1px solid #222; /* Viền đen nhẹ */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   min-height: 48px;
+  display: flex;
+  justify-content: center;
 }
 
 .simple-tabs .MuiTab-root {
-  min-width: 140px;
-  color: #333;
-  font-size: 16px;
-  font-weight: 600;
+  min-width: 160px; /* Rộng để cân đối */
+  color: #000; /* Màu chữ đen */
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;       /* Giữ font-weight cố định */
   text-transform: none;
-  padding: 12px 0;
-  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  border-bottom: 3px solid transparent;
+  transition: background 0.3s, color 0.3s, border-bottom 0.3s;
 }
 
+/* Tab đang chọn chỉ thêm border dưới nổi bật */
 .simple-tabs .MuiTab-root.Mui-selected,
 .simple-tabs .MuiTab-root.tab-selected {
-  color: #1976d2;
-  border-bottom: 2px solid #1976d2;
+  color: #000 !important;
+  border-bottom: 3px solid #000;
+  /* Không thay đổi font-weight, không đổi backgroud */
 }
 
+/* Hover nhẹ chỉ đổi nền sáng, không đổi màu chữ hoặc border */
 .simple-tabs .MuiTab-root:hover {
-  background: #f0f0f0;
+  background: #f2f2f2;
+  color: #000 !important;
+  cursor: pointer;
+  border-bottom: 3px solid #222;
 }
 
+/* Ẩn indicator mặc định */
 .simple-tabs .MuiTabs-indicator {
   display: none;
 }
@@ -57,8 +69,7 @@
 .custom-card {
   width: 1150px;
   max-width: 95vw;
-  /* Set a fixed height or max-height to enable internal scrolling */
-  height: 500px; /* Keep your current fixed height */
+  height: 500px;
   border-radius: 18px;
   padding: 32px 40px;
   background: #fff;
@@ -67,7 +78,7 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  overflow: hidden; /* Important: Clip content that overflows */
+  overflow: hidden;
 }
 
 .card-title {
@@ -132,45 +143,6 @@
   border-color: #90caf9 !important;
 }
 
-/* New: Make gantt-content scrollable */
-.gantt-content {
-  flex: 1; /* Allow content to grow and take available space */
-  overflow-y: auto; /* Add vertical scrollbar if content overflows */
-  padding-right: 15px; /* Add some padding to prevent content from touching the scrollbar */
-}
-
-/* New: Make calendar-content scrollable */
-.calendar-content {
-  flex: 1; /* Allow content to grow and take available space */
-  overflow-y: auto; /* Add vertical scrollbar if content overflows */
-  padding-right: 15px; /* Add some padding to prevent content from touching the scrollbar */
-}
-
-
-/* Scrollbar styles for Webkit browsers (Chrome, Safari, Edge) */
-.gantt-content::-webkit-scrollbar,
-.calendar-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.gantt-content::-webkit-scrollbar-track,
-.calendar-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.gantt-content::-webkit-scrollbar-thumb,
-.calendar-content::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 10px;
-}
-
-.gantt-content::-webkit-scrollbar-thumb:hover,
-.calendar-content::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-
 .empty-state {
   min-height: 130px;
   padding: 36px 0;
@@ -229,10 +201,11 @@
   color: #1565c0;
   margin-top: 6px;
 }
+
 @media (max-width: 1200px) {
   .custom-card {
     width: 95vw;
-    height: auto; /* Allow height to adjust on smaller screens if needed, or maintain max-height if content is still scrollable */
+    height: auto;
   }
 }
 

@@ -21,8 +21,10 @@ import AdminReport from "./components/Admin/AdminReport";
 import AdminTimeline from "./components/Admin/AdminTimeline";
 import MeetingSchedule from "./components/MeetingSchedule";
 import SupportRequest from "./components/SupportRequest";
-import DocumentsPage from "./components/DocumentsPage"; // Import DocumentsPage
-
+import DocumentsPage from "./components/DocumentsPage";
+import AdminDecentralization from "./components/Admin/AdminDecentralization" // Import AdminDecentralization
+import ProjectsPage from "./components/ProjectsPage"; // Import ProjectsPage
+import IncidentPage from "./components/IncidentPage"; // Import IncidentPage
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
@@ -30,10 +32,12 @@ import { CircularProgress } from "@mui/material";
 function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
   const [authToken, setAuthToken] = useState(localStorage.getItem("token"));
-  const [currentUser, setCurrentUser] = useState(null); // currentUser sẽ chứa đối tượng user từ API /users/me
+  const [currentUser, setCurrentUser] = useState(null); // currentUser will contain the user object from /users/me API
+  const [currentAccount, setCurrentAccount] = useState(null); // currentAccount will contain the account object from /accounts/me API
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const fetchingRef = useRef(false);
+  const fetchingUserRef = useRef(false);
+  const fetchingAccountRef = useRef(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -51,7 +55,7 @@ function App() {
   }, []);
 
   const fetchUserProfile = useCallback(async (token) => {
-    if (!token || fetchingRef.current) {
+    if (!token || fetchingUserRef.current) {
       console.log(
         token
           ? "fetchUserProfile already in progress, skipping."
@@ -60,7 +64,7 @@ function App() {
       return { needsProfileCreation: false, error: false, user: null };
     }
 
-    fetchingRef.current = true;
+    fetchingUserRef.current = true;
     try {
       const response = await fetch("http://localhost:3000/api/users/me", {
         method: "GET",
@@ -71,13 +75,11 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        // Kiểm tra trực tiếp sự tồn tại và tính hợp lệ của đối tượng user
         if (data.user && data.user._id) {
           setCurrentUser(data.user);
           console.log("Fetched user profile:", data.user);
           return { needsProfileCreation: false, error: false, user: data.user };
         } else {
-          // Nếu phản hồi là OK nhưng đối tượng user bị thiếu hoặc không hợp lệ, coi như cần tạo hồ sơ
           setCurrentUser(null);
           console.warn("User profile data missing from API response:", data);
           return { needsProfileCreation: true, error: false, user: null, message: data.message || "Không tìm thấy hồ sơ người dùng." };
@@ -85,17 +87,16 @@ function App() {
       } else {
         setCurrentUser(null);
         console.error("Error fetching profile, response not ok:", data.message);
-        // Nếu lỗi HTTP là 404 hoặc thông báo lỗi rõ ràng cho biết không tìm thấy hồ sơ, coi như cần tạo hồ sơ
         if (response.status === 404 || data.message?.includes("Không tìm thấy thông tin người dùng")) {
             return {
-                needsProfileCreation: true, // Coi như cần tạo hồ sơ nếu rõ ràng là 404 hoặc thông báo gợi ý
-                error: false, // Đây là một trạng thái hợp lệ (chưa có hồ sơ), không phải lỗi trong yêu cầu
+                needsProfileCreation: true,
+                error: false,
                 user: null,
                 message: data.message || "Không tìm thấy hồ sơ người dùng.",
             };
         }
         return {
-          needsProfileCreation: false, // Mặc định là false cho các lỗi khác
+          needsProfileCreation: false,
           error: true,
           user: null,
           message: data.message,
@@ -111,7 +112,62 @@ function App() {
         message: error.message,
       };
     } finally {
-      fetchingRef.current = false;
+      fetchingUserRef.current = false;
+    }
+  }, []);
+
+  // New function to fetch account profile
+  const fetchAccountProfile = useCallback(async (token) => {
+    if (!token || fetchingAccountRef.current) {
+      console.log(
+        token
+          ? "fetchAccountProfile already in progress, skipping."
+          : "No token provided to fetchAccountProfile."
+      );
+      return { error: false, account: null };
+    }
+
+    fetchingAccountRef.current = true;
+    try {
+      const response = await fetch("http://localhost:3000/api/accounts/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+
+        if (data.account && data.account.id) {
+
+          setCurrentAccount(data.account);
+          console.log("Fetched account profile:", data.account); // This will now log when fetched
+          return { error: false, account: data.account };
+        } else {
+          setCurrentAccount(null);
+          console.warn("Account profile data missing from API response:", data);
+          return { error: true, account: null, message: data.message || "Không tìm thấy thông tin tài khoản." };
+        }
+      } else {
+        setCurrentAccount(null);
+        console.error("Error fetching account, response not ok:", data.message);
+        return {
+          error: true,
+          account: null,
+          message: data.message,
+        };
+      }
+    } catch (error) {
+      console.error("Fetch account network/unexpected error:", error);
+      setCurrentAccount(null);
+      return {
+        error: true,
+        account: null,
+        message: error.message,
+      };
+    } finally {
+      fetchingAccountRef.current = false;
     }
   }, []);
 
@@ -119,6 +175,7 @@ function App() {
     localStorage.removeItem("token");
     setAuthToken(null);
     setCurrentUser(null);
+    setCurrentAccount(null); // Clear account on logout
     setIsInitializing(true);
     toast.info("Bạn đã đăng xuất.");
     navigate("/login");
@@ -128,7 +185,21 @@ function App() {
     const initializeApp = async () => {
       setIsInitializing(true);
       if (authToken) {
+        // Always attempt to fetch account profile if authToken exists
+        const accountResult = await fetchAccountProfile(authToken);
+        if (accountResult.error) {
+          toast.error(
+            accountResult.message ||
+            "Không thể tải thông tin tài khoản. Vui lòng đăng nhập lại."
+          );
+          handleLogout();
+          setIsInitializing(false); // Stop initializing if account fetch fails and logs out
+          return;
+        }
+
+        // Only then attempt to fetch user profile
         const profileResult = await fetchUserProfile(authToken);
+
         if (profileResult.needsProfileCreation) {
           toast.warn("Không tìm thấy hồ sơ người dùng. Vui lòng tạo hồ sơ.");
           navigate("/create-profile");
@@ -148,7 +219,9 @@ function App() {
           "/verify-email",
           "/about",
           "/timeline",
-          "/documents", // Add /documents to public pages
+          "/documents",
+          "/projects",
+          "/incidents", // Add incidents to public pages if accessible without auth
         ];
         if (
           !publicPages.some((publicPath) => currentPage.startsWith(publicPath))
@@ -160,13 +233,26 @@ function App() {
     };
 
     initializeApp();
-  }, [authToken, navigate, fetchUserProfile, currentPage, handleLogout]);
+  }, [authToken, navigate, fetchUserProfile, fetchAccountProfile, currentPage, handleLogout]);
 
   const handleLoginSuccess = useCallback(
     async (token) => {
       localStorage.setItem("token", token);
       setAuthToken(token);
       toast.success("Đăng nhập thành công!");
+
+      // Always attempt to fetch account profile after login
+      const accountResult = await fetchAccountProfile(token);
+      if (accountResult.error) {
+        toast.error(
+          accountResult.message ||
+          "Đăng nhập thành công nhưng không thể tải thông tin tài khoản. Vui lòng thử lại."
+        );
+        handleLogout();
+        return;
+      }
+
+      // Then attempt to fetch user profile
       const profileResult = await fetchUserProfile(token);
       if (profileResult.needsProfileCreation) {
         toast.warn("Bạn chưa có hồ sơ. Vui lòng tạo hồ sơ.");
@@ -177,27 +263,31 @@ function App() {
             "Đăng nhập thành công nhưng không thể tải hồ sơ. Vui lòng thử lại."
         );
         handleLogout();
-      } else {
+      } else if (profileResult.user) {
+        // If both account and user profile are successfully fetched, navigate to homepage
         navigate("/homepage");
       }
     },
-    [fetchUserProfile, navigate]
+    [fetchUserProfile, fetchAccountProfile, navigate, handleLogout]
   );
 
   const handleProfileCreatedOrUpdated = useCallback(async () => {
     toast.success("Hồ sơ đã được tạo/cập nhật thành công!");
     if (authToken) {
+      // Re-fetch both account and user profile after profile creation/update
+      const accountResult = await fetchAccountProfile(authToken);
       const profileResult = await fetchUserProfile(authToken);
-      if (profileResult.user) {
+
+      if (profileResult.user && accountResult.account) {
         navigate("/profile");
       } else {
         toast.error(
-          "Có lỗi khi tải lại hồ sơ sau khi tạo/cập nhật. Vui lòng thử lại đăng nhập."
+          "Có lỗi khi tải lại thông tin sau khi tạo/cập nhật hồ sơ. Vui lòng thử lại đăng nhập."
         );
         handleLogout();
       }
     }
-  }, [authToken, fetchUserProfile, navigate, handleLogout]);
+  }, [authToken, fetchUserProfile, fetchAccountProfile, navigate, handleLogout]);
 
   const renderCurrentPage = () => {
     const path = currentPage;
@@ -209,7 +299,9 @@ function App() {
       "/verify-email",
       "/about",
       "/timeline",
-      "/documents", // Keep /documents in public pages for direct access
+      "/documents",
+      "/projects",
+      "/incidents", // Add incidents to public pages
     ];
     const isPublicPage = publicPages.some((publicPath) =>
       path.startsWith(publicPath)
@@ -278,17 +370,30 @@ function App() {
                 return <About />;
             case path === "/timeline":
                 return <Timeline />;
-            case path === "/documents": // Directly render DocumentsPage if it's a public page
+            case path === "/documents":
                 return (
                     <DocumentsPage
-                        authToken={authToken} // authToken might be null here if not logged in
-                        currentUser={currentUser} // currentUser might be null here if not logged in
+                        authToken={authToken}
+                        currentUser={currentUser}
                         setCurrentPage={navigate}
                     />
                 );
+            case path === "/projects":
+                return (
+                    <ProjectsPage
+                        authToken={authToken}
+                        currentUserId={currentUser?._id}
+                    />
+                );
+            case path === "/incidents": // New case for IncidentPage
+                return (
+                    <IncidentPage
+                        authToken={authToken}
+                        currentUserId={currentUser?._id}
+                        currentUserRoleTag={currentUser?.roleTag} // Pass role tag for conditional rendering
+                    />
+                );
             default:
-                // This case should ideally not be hit if all public pages are explicitly handled
-                // But as a fallback, if an unknown public path is accessed, direct to login.
                 if (!authToken) {
                     navigate("/login");
                     return null;
@@ -306,15 +411,18 @@ function App() {
     if (
       (path === "/login" || path === "/register") &&
       authToken &&
-      currentUser
+      currentUser &&
+      currentAccount // Ensure account is also loaded
     ) {
       navigate("/homepage");
       return null;
     }
 
     // Redirect authenticated users without a profile to create-profile
+    // This condition now correctly relies on currentUser being null, but authToken and currentAccount exist.
     if (
       authToken &&
+      currentAccount && // Ensure account is loaded before checking for user profile
       !currentUser &&
       path !== "/create-profile" // Ensure we don't redirect from create-profile itself
     ) {
@@ -322,15 +430,14 @@ function App() {
       return null;
     }
 
-    // Helper for pages requiring authentication and user profile
+    // Helper for pages requiring authentication and user/account profiles
     const commonAuthProtectedPageCheck = () => {
       if (!authToken) {
-        // This case should ideally be caught by the general !authToken check above
         navigate("/login");
         return true; // Indicate that navigation happened, component should not render
       }
-      if (!currentUser) {
-        // If authToken exists but currentUser is null (still loading or profile not found)
+      if (!currentUser || !currentAccount) {
+        // If authToken exists but currentUser or currentAccount is null (still loading or profile/account not found)
         return (
           <div
             style={{
@@ -343,7 +450,7 @@ function App() {
           >
             <CircularProgress />
             <p style={{ marginTop: "16px" }}>
-              Đang tải thông tin người dùng...
+              Đang tải thông tin người dùng và tài khoản...
             </p>
           </div>
         );
@@ -365,7 +472,7 @@ function App() {
           />
         );
       case path === "/create-profile":
-        if (!authToken) {
+        if (!authToken || !currentAccount) { // Ensure currentAccount is loaded before allowing profile creation
           navigate("/login");
           return null;
         }
@@ -427,12 +534,12 @@ function App() {
 
       // ===== ADMIN ROUTES =====
       case path === "/admin":
-        if (!authToken || !currentUser) {
+        if (!authToken || !currentUser || !currentAccount) {
           toast.error("Bạn không có quyền truy cập trang Admin.");
           navigate("/homepage");
           return null;
         }
-        if (currentUser.roleTag !== "ADMIN") {
+        if (currentAccount.role !== "ADMIN") { // Check role from currentAccount
           toast.error("Bạn không có quyền truy cập trang Admin.");
           navigate("/homepage");
           return null;
@@ -444,9 +551,8 @@ function App() {
             currentUser={currentUser}
           />
         );
-
       case path === "/admin-report":
-        if (!authToken || !currentUser || currentUser.roleTag !== "ADMIN") {
+        if (!authToken || !currentUser || !currentAccount || currentAccount.role !== "ADMIN") {
           toast.error("Bạn không có quyền truy cập báo cáo.");
           navigate("/homepage");
           return null;
@@ -460,7 +566,7 @@ function App() {
         );
 
       case path === "/admin-timeline":
-        if (!authToken || !currentUser || currentUser.roleTag !== "ADMIN") {
+        if (!authToken || !currentUser || !currentAccount || currentAccount.role !== "ADMIN") {
           toast.error("Bạn không có quyền truy cập timeline quản trị.");
           navigate("/homepage");
           return null;
@@ -472,7 +578,20 @@ function App() {
             currentUser={currentUser}
           />
         );
-
+      case path === "/admin-decentralization": // Add this new case for AdminDecentralization
+        if (!authToken || !currentUser || !currentAccount || currentAccount.role !== "ADMIN") {
+          toast.error("Bạn không có quyền truy cập trang phân quyền quản trị.");
+          navigate("/homepage");
+          return null;
+        }
+        return (
+          <AdminDecentralization
+            setCurrentPage={navigate}
+            authToken={authToken}
+            currentUser={currentUser}
+            currentAccount={currentAccount}
+          />
+        );
       case path === "/meeting-schedule":
         const meetingScheduleCheck = commonAuthProtectedPageCheck();
         if (meetingScheduleCheck === true) return null;
@@ -484,20 +603,16 @@ function App() {
         if (supportRequestCheck === true) return null;
         if (supportRequestCheck !== false) return supportRequestCheck;
         return <SupportRequest setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
-
-      // Removed DocumentsPage from here as it's now handled as a public page
-      
+          
       case path === "/homepage":
       case path === "/":
         const homepageCheck = commonAuthProtectedPageCheck();
         if (homepageCheck === true) return null;
         if (homepageCheck !== false) return homepageCheck;
         return <Homepage setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
-        
+          
       default:
-        // If it's not a known public page and not authenticated, redirect to login
-        // If it's an unknown authenticated route, redirect to homepage
-        if (authToken && currentUser) {
+        if (authToken && currentUser && currentAccount) {
           navigate("/homepage");
         } else {
           navigate("/login");
@@ -512,7 +627,9 @@ function App() {
         currentPage={currentPage}
         setCurrentPage={navigate}
         currentUser={currentUser}
+        currentAccount={currentAccount}
         onLogout={handleLogout}
+        authToken={authToken}
       />
       {renderCurrentPage()}
       <ToastContainer
