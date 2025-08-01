@@ -20,11 +20,13 @@ import Admin from "./components/Admin/Admin";
 import AdminReport from "./components/Admin/AdminReport";
 import AdminTimeline from "./components/Admin/AdminTimeline";
 import MeetingSchedule from "./components/MeetingSchedule";
-import SupportRequest from "./components/SupportRequest";
+
 import DocumentsPage from "./components/DocumentsPage";
 import AdminDecentralization from "./components/Admin/AdminDecentralization" // Import AdminDecentralization
 import ProjectsPage from "./components/ProjectsPage"; // Import ProjectsPage
 import IncidentPage from "./components/IncidentPage"; // Import IncidentPage
+import SupportRequestPage from "./components/SupportRequestPage"; // Import SupportRequestPage
+import SupportResponsePage from "./components/SupportResponsePage"; // Import SupportResponsePage
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
@@ -221,7 +223,9 @@ function App() {
           "/timeline",
           "/documents",
           "/projects",
-          "/incidents", // Add incidents to public pages if accessible without auth
+          "/incidents",
+          "/support-requests", // Add support requests to public pages
+          "/support-responses", // Add support responses to public pages
         ];
         if (
           !publicPages.some((publicPath) => currentPage.startsWith(publicPath))
@@ -301,7 +305,9 @@ function App() {
       "/timeline",
       "/documents",
       "/projects",
-      "/incidents", // Add incidents to public pages
+      "/incidents",
+      "/support-requests", // Add support requests to public pages
+      "/support-responses", // Add support responses to public pages
     ];
     const isPublicPage = publicPages.some((publicPath) =>
       path.startsWith(publicPath)
@@ -391,6 +397,22 @@ function App() {
                         authToken={authToken}
                         currentUserId={currentUser?._id}
                         currentUserRoleTag={currentUser?.roleTag} // Pass role tag for conditional rendering
+                    />
+                );
+            case path === "/support-requests": // New case for SupportRequestPage
+                return (
+                    <SupportRequestPage
+                        authToken={authToken}
+                        currentUserId={currentUser?._id}
+                        currentUserRoleTag={currentUser?.roleTag}
+                    />
+                );
+            case path === "/support-responses": // New case for SupportResponsePage
+                return (
+                    <SupportResponsePage
+                        authToken={authToken}
+                        currentUserId={currentUser?._id}
+                        currentUserRoleTag={currentUser?.roleTag}
                     />
                 );
             default:
@@ -598,11 +620,7 @@ function App() {
         if (meetingScheduleCheck !== false) return meetingScheduleCheck;
         return <MeetingSchedule setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
 
-      case path === "/support-request":
-        const supportRequestCheck = commonAuthProtectedPageCheck();
-        if (supportRequestCheck === true) return null;
-        if (supportRequestCheck !== false) return supportRequestCheck;
-        return <SupportRequest setCurrentPage={navigate} authToken={authToken} currentUser={currentUser} />;
+
           
       case path === "/homepage":
       case path === "/":

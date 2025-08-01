@@ -15,6 +15,7 @@ import {
   GitPullRequestDraft, // Import for decentralization icon
   FolderOpen, // Icon for Projects
   Bug, // Icon for Incidents
+  LifeBuoy, // Icon for Support Requests
 } from "lucide-react";
 import { FileText } from "lucide-react";
 
@@ -514,9 +515,9 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                 >
                   Tài liệu
                 </MenuItem>
-                <MenuItem // New menu item for Incidents
+                <MenuItem
                   onClick={() => handleNavLinkClick("/incidents")}
-                  icon={Bug} // Using Bug as an example icon
+                  icon={Bug}
                   isHovered={hoveredStates.incidents}
                   onMouseEnter={() => handleMouseEnter("incidents")}
                   onMouseLeave={() => handleMouseLeave("incidents")}
@@ -605,7 +606,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                 >
                   <div style={styles.avatar}>
                     {currentAccount ? getInitialsFromEmail(currentAccount.email) : "NA"}
-                  </div> {/* Use currentAccount if available, otherwise a placeholder */}
+                  </div>
                   <ChevronDown
                     size={14}
                     style={{
@@ -621,7 +622,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                   style={{ right: 0, left: "auto" }}
                 >
                   <div style={styles.userInfo}>
-                    <p style={styles.userName}>{currentAccount ? currentAccount.email : "Loading..."}</p> {/* Sử dụng email làm tên hiển thị */}
+                    <p style={styles.userName}>{currentAccount ? currentAccount.email : "Loading..."}</p>
                     <p style={styles.userEmail}>{currentAccount ? currentAccount.email : "Loading..."}</p>
                   </div>
                   <MenuItem
@@ -634,8 +635,17 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                     Profile
                   </MenuItem>
 
+                  <MenuItem
+                    onClick={() => handleNavLinkClick("/support-requests")}
+                    icon={LifeBuoy}
+                    isHovered={hoveredStates.supportRequests}
+                    onMouseEnter={() => handleMouseEnter("supportRequests")}
+                    onMouseLeave={() => handleMouseLeave("supportRequests")}
+                  >
+                    Yêu cầu hỗ trợ
+                  </MenuItem>
 
-                  {currentAccount && currentAccount.role === "ADMIN" && ( // Check role from currentAccount
+                  {currentAccount && currentAccount.role === "ADMIN" && (
                     <>
                       <MenuItem
                         onClick={() => handleNavLinkClick("/admin")}
@@ -664,14 +674,23 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                       >
                         Timeline quản trị
                       </MenuItem>
-                       <MenuItem // New menu item for Admin Decentralization
+                       <MenuItem
                         onClick={() => handleNavLinkClick("/admin-decentralization")}
-                        icon={GitPullRequestDraft} // Using GitPullRequestDraft as an example icon
+                        icon={GitPullRequestDraft}
                         isHovered={hoveredStates.adminDecentralization}
                         onMouseEnter={() => handleMouseEnter("adminDecentralization")}
                         onMouseLeave={() => handleMouseLeave("adminDecentralization")}
                       >
                         Phân quyền
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleNavLinkClick("/support-responses")}
+                        icon={LifeBuoy}
+                        isHovered={hoveredStates.supportResponses}
+                        onMouseEnter={() => handleMouseEnter("supportResponses")}
+                        onMouseLeave={() => handleMouseLeave("supportResponses")}
+                      >
+                        Xử lý yêu cầu
                       </MenuItem>
                     </>
                   )}
@@ -699,23 +718,13 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
                 onMouseEnter={() => handleMouseEnter("login")}
                 onMouseLeave={() => handleMouseLeave("login")}
                 style={{
-                  ...styles.loginButton,
+                  ...styles.registerButton,
                   ...(hoveredStates.login ? styles.loginButtonHover : {}),
                 }}
               >
                 Đăng nhập
               </button>
-              <button
-                onClick={() => handleNavLinkClick("/register")}
-                onMouseEnter={() => handleMouseEnter("register")}
-                onMouseLeave={() => handleMouseLeave("register")}
-                style={{
-                  ...styles.registerButton,
-                  ...(hoveredStates.register ? styles.registerButtonHover : {}),
-                }}
-              >
-                Đăng ký
-              </button>
+
             </div>
           )}
         </div>
