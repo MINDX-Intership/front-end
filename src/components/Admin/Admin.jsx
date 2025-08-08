@@ -134,16 +134,16 @@ const Admin = ({ authToken }) => {
   const [departmentCode, setDepartmentCode] = useState("");
   const [departmentDesc, setDepartmentDesc] = useState("");
 
-  // New states for Add Employee form
+
   const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
   const [newEmployeePassword, setNewEmployeePassword] = useState('');
   const [newEmployeeConfirmPassword, setNewEmployeeConfirmPassword] = useState('');
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeAge, setNewEmployeeAge] = useState(''); // Keep age state for API
+  const [newEmployeeAge, setNewEmployeeAge] = useState('');
   const [newEmployeePhone, setNewEmployeePhone] = useState('');
 
 
-  // Function to fetch all employees
+
   const fetchEmployees = async () => {
     if (!authToken) return;
     setLoading(true);
@@ -169,10 +169,10 @@ const Admin = ({ authToken }) => {
     }
   };
 
-  // Fetch all employees on mount
+
   useEffect(() => {
     fetchEmployees();
-  }, [authToken]); // Dependency on authToken to refetch if it changes
+  }, [authToken]);
 
   const handleSelectFunction = (key) => {
     setActiveForm(key);
@@ -203,7 +203,7 @@ const Admin = ({ authToken }) => {
           },
           body: JSON.stringify({
             userId: selectedUserId,
-            roles: rolesInput.split(',').map(role => role.trim()), // Split roles by comma and trim whitespace
+            roles: rolesInput.split(',').map(role => role.trim()),
           }),
         }
       );
@@ -211,9 +211,9 @@ const Admin = ({ authToken }) => {
       if (!res.ok) {
         throw new Error(data.message || "Cấp quyền thất bại");
       }
-      toast.success("Cấp quyền thành công"); // Success toast
+      toast.success("Cấp quyền thành công");
     } catch (err) {
-      toast.error(err.message); // Error toast
+      toast.error(err.message);
     }
   };
 
@@ -238,9 +238,9 @@ const Admin = ({ authToken }) => {
       if (!res.ok) {
         throw new Error(data.message || "Cập nhật quyền thất bại");
       }
-      toast.success("Cập nhật quyền thành công"); // Success toast
+      toast.success("Cập nhật quyền thành công");
     } catch (err) {
-      toast.error(err.message); // Error toast
+      toast.error(err.message);
     }
   };
 
@@ -263,13 +263,13 @@ const Admin = ({ authToken }) => {
       if (!res.ok) {
         throw new Error(data.message || "Xóa quyền thất bại");
       }
-      toast.success("Xóa quyền thành công"); // Success toast
+      toast.success("Xóa quyền thành công");
     } catch (err) {
-      toast.error(err.message); // Error toast
+      toast.error(err.message);
     }
   };
 
-  // --- New Function: Add Department ---
+
   const addDepartment = async () => {
     try {
       const res = await fetch("http://localhost:3000/api/departs/create", {
@@ -294,13 +294,13 @@ const Admin = ({ authToken }) => {
       setDepartmentName("");
       setDepartmentCode("");
       setDepartmentDesc("");
-      setActiveForm(null); // Go back to the main list
+      setActiveForm(null);
     } catch (err) {
-      toast.error(err.message); // Error toast
+      toast.error(err.message);
     }
   };
 
-  // --- New Function: Add Employee (similar to Register.jsx) ---
+
   const handleAddEmployee = async (event) => {
     event.preventDefault(); // Prevent default form submission
 

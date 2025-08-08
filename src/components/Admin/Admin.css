@@ -44,7 +44,7 @@
   cursor: pointer;
 }
 
-/* Chỉ đổi nền khi hover, không đổi màu chữ */
+
 .sub-function-item:hover {
   background: #000;
   border: 1px solid #000;
