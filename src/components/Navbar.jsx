@@ -34,7 +34,7 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
   const pages = [
     { label: "Trang chủ", path: "/homepage", icon: Home },
     { label: "Công việc - Sprint", path: "/sprints", icon: Settings },
-    { label: "Công việc cá nhân", path: "/personal-task", icon: User },
+    { label: "task", path: "/personal-task", icon: User },
     { label: "Tài liệu", path: "/documents", icon: FileText },
     { label: "Dự án", path: "/projects", icon: FolderOpen },
     { label: "Sự cố", path: "/incidents", icon: Bug },
@@ -129,7 +129,6 @@ function Navbar({ currentPage, setCurrentPage, currentUser, currentAccount, onLo
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      height: "64px",
     },
     logo: {
       display: "flex",

@@ -82,13 +82,7 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
             >
               đăng nhập
             </span>{' '}
-            hoặc{' '}
-            <span
-              style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
-              onClick={() => setCurrentPage('/register')}
-            >
-              đăng ký
-            </span>{' '}
+
             nếu cần.
           </Typography>
         )}

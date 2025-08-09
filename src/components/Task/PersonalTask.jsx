@@ -494,7 +494,7 @@ function PersonalTask({ authToken, setCurrentPage, currentUserId }) {
   };
 
   const handleCreateTask = async () => {
-    if (!taskTitle || !selectedSprintId || !selectedDepartId) {
+    if (!taskTitle || !selectedDepartId) {
       toast.warn("Vui lòng điền Tiêu đề, chọn Sprint và Phòng ban.");
       return;
     }

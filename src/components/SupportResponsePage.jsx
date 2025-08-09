@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CircularProgress,
   Typography,
@@ -6,25 +6,22 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
-  Button,
+  Chip,
+  Grid,
   IconButton,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
-  Chip,
-  Grid,
-  styled,
+  Button,
   TextField,
   MenuItem,
   FormControl,
   InputLabel,
   Select,
+  styled,
 } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ConstructionIcon from "@mui/icons-material/Construction"; // Changed from EditIcon
+import ConstructionIcon from "@mui/icons-material/Construction";
 import { toast } from "react-toastify";
 
 // Styled components based on SprintsPage.jsx
@@ -89,27 +86,38 @@ const ResponseCard = styled(Paper)({
 
 const getStatusColor = (status) => {
   switch (status) {
-    case "chờ xử lý":
+    case "pending":
       return { backgroundColor: "#ffc107", color: "#000" };
-    case "đang xử lý":
+    case "in_progress":
       return { backgroundColor: "#17a2b8", color: "#fff" };
-    case "đã xử lý":
-    case "Đã hoàn tất":
+    case "done":
       return { backgroundColor: "#28a745", color: "#fff" };
-    case "Đã huỷ":
-      return { backgroundColor: "#dc3545", color: "#fff" };
     default:
       return { backgroundColor: "#6c757d", color: "#fff" };
   }
 };
 
-const SupportResponsePage = ({ authToken }) => {
+// Chuyển đổi trạng thái từ enum sang tiếng Việt để hiển thị
+const getStatusLabel = (status) => {
+  switch (status) {
+    case "pending":
+      return "Chờ xử lý";
+    case "in_progress":
+      return "Đang xử lý";
+    case "done":
+      return "Đã hoàn tất";
+    default:
+      return "Không xác định";
+  }
+};
+
+const SupportResponsePage = ({ authToken, currentUserId }) => {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openHandleDialog, setOpenHandleDialog] = useState(false);
   const [responseToHandle, setResponseToHandle] = useState(null);
   const [handleData, setHandleData] = useState({
-    status: "đang xử lý",
+    status: "in_progress",
     responseMessage: "",
   });
 
@@ -155,6 +163,13 @@ const SupportResponsePage = ({ authToken }) => {
 
   const handleSupportResponse = async () => {
     try {
+      // Dữ liệu cập nhật bao gồm handledBy và handledAt
+      const updateData = {
+        ...handleData,
+        handledBy: currentUserId,
+        handledAt: new Date(),
+      };
+      
       const res = await fetch(
         `http://localhost:3000/api/supports-response/${responseToHandle._id}`,
         {
@@ -163,14 +178,14 @@ const SupportResponsePage = ({ authToken }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify(handleData),
+          body: JSON.stringify(updateData),
         }
       );
       if (!res.ok) throw new Error("Xử lý yêu cầu thất bại.");
       toast.success("Xử lý yêu cầu hỗ trợ thành công!");
       setOpenHandleDialog(false);
       setResponseToHandle(null);
-      setHandleData({ status: "đang xử lý", responseMessage: "" });
+      setHandleData({ status: "in_progress", responseMessage: "" });
       fetchResponses();
     } catch (error) {
       toast.error(`Lỗi: ${error.message}`);
@@ -246,13 +261,13 @@ const SupportResponsePage = ({ authToken }) => {
                     <Grid
                       container
                       alignItems="center"
-                      justifyContent="flex-end" // Aligned to the right
+                      justifyContent="flex-end"
                       spacing={2}
                       sx={{ mt: 2, width: "auto" }}
                     >
                       <Grid item>
                         <Chip
-                          label={resp.status.toUpperCase()}
+                          label={getStatusLabel(resp.status)}
                           sx={{
                             ...getStatusColor(resp.status),
                             fontWeight: 600,
@@ -266,7 +281,7 @@ const SupportResponsePage = ({ authToken }) => {
                           onClick={() => openDialog(resp)}
                           sx={{ color: "#764ba2" }}
                         >
-                          <ConstructionIcon /> {/* Changed to ConstructionIcon */}
+                          <ConstructionIcon />
                         </IconButton>
                       </Grid>
                     </Grid>
@@ -309,11 +324,9 @@ const SupportResponsePage = ({ authToken }) => {
                 setHandleData({ ...handleData, status: e.target.value })
               }
             >
-              <MenuItem value="chờ xử lý">Chờ xử lý</MenuItem>
-              <MenuItem value="đang xử lý">Đang xử lý</MenuItem>
-              <MenuItem value="Đã hoàn tất">Đã hoàn tất</MenuItem>
-              <MenuItem value="đã xử lý">Đã xử lý</MenuItem>
-              <MenuItem value="Đã huỷ">Đã huỷ</MenuItem>
+              <MenuItem value="pending">Chờ xử lý</MenuItem>
+              <MenuItem value="in_progress">Đang xử lý</MenuItem>
+              <MenuItem value="done">Đã hoàn tất</MenuItem>
             </Select>
           </FormControl>
           <TextField

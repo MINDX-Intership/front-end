@@ -1,10 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import {
   Accordion, AccordionSummary, AccordionDetails,
-  Typography, Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, List, ListItemButton, ListItemText, Divider, CircularProgress
+  Typography, Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, List, ListItemButton, ListItemText, Divider, CircularProgress,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import './AdminReport.css';
+import { styled } from '@mui/system';
+
+const ReportContainer = styled(Box)({
+  display: 'flex',
+  gap: '24px',
+  padding: '24px',
+  backgroundColor: '#f5f5f5',
+  minHeight: '100vh',
+});
+
+const Sidebar = styled(Box)({
+  flex: '0 0 280px',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  borderRadius: '12px',
+  backgroundColor: '#fff',
+  overflow: 'hidden',
+});
+
+const ReportContent = styled(Box)({
+  flex: '1',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  borderRadius: '12px',
+  backgroundColor: '#fff',
+  padding: '24px',
+});
+
+const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
+  backgroundColor: '#424242',
+  color: '#fff',
+  '& .MuiAccordionSummary-expandIconWrapper .MuiSvgIcon-root': {
+    color: '#fff',
+  },
+}));
+
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  '&.Mui-selected': {
+    backgroundColor: '#e0e0e0',
+    
+    '&:hover': {
+      backgroundColor: '#e0e0e0',
+    },
+  },
+  '&:hover': {
+    backgroundColor: '#fafafa',
+  },
+}));
 
 export default function AdminReport({ authToken }) {
   const [selected, setSelected] = useState('overview');
@@ -15,9 +60,7 @@ export default function AdminReport({ authToken }) {
   const baseURL = 'http://localhost:3000/api/reports';
   const endpoints = {
     overview: `${baseURL}/overview`,
-    detail: `${baseURL}/detailed`,
     performance: `${baseURL}/performance`,
-    progress: `${baseURL}/projects/progress`,
   };
 
   const handleSelect = (key) => () => setSelected(key);
@@ -54,15 +97,17 @@ export default function AdminReport({ authToken }) {
     if (!data?.overview) return null;
     const { employees, tasks, projects, sprints } = data.overview;
     return (
-      <Paper elevation={0} className="report-table-paper">
-        <Typography className="report-title">Báo Cáo Tổng Quan</Typography>
-        <Table size="medium" className="big-table">
+      <Paper elevation={0} sx={{ p: 2, borderRadius: '8px' }}>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+          Báo Cáo Tổng Quan
+        </Typography>
+        <Table size="medium">
           <TableHead>
-            <TableRow>
-              <TableCell>Loại</TableCell>
-              <TableCell>Số lượng</TableCell>
-              <TableCell>Hoạt động/Hoàn thành</TableCell>
-              <TableCell>Tỷ lệ</TableCell>
+            <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Loại</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Số lượng</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Hoạt động/Hoàn thành</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tỷ lệ</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -82,7 +127,7 @@ export default function AdminReport({ authToken }) {
               <TableCell>Dự án</TableCell>
               <TableCell>{projects.total}</TableCell>
               <TableCell>{projects.active}</TableCell>
-              <TableCell>{projects.progress.length}</TableCell>
+              <TableCell>-</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Sprint</TableCell>
@@ -96,64 +141,27 @@ export default function AdminReport({ authToken }) {
     );
   };
 
-  const renderDetail = () => {
-    const items = data?.detailed || [];
-    return (
-      <Paper elevation={0} className="report-table-paper">
-        <Typography className="report-title">Báo Cáo Chi Tiết</Typography>
-        <Table size="medium" className="big-table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Mã</TableCell>
-              <TableCell>Tên</TableCell>
-              <TableCell>Phụ trách</TableCell>
-              <TableCell>Tiến độ</TableCell>
-              <TableCell>Trạng thái</TableCell>
-              <TableCell>Hạn chót</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {items.length ? items.map((proj) => (
-              <TableRow key={proj.id || proj._id}>
-                <TableCell>{proj.id || proj._id}</TableCell>
-                <TableCell>{proj.name}</TableCell>
-                <TableCell>{proj.owner}</TableCell>
-                <TableCell>{proj.progress}</TableCell>
-                <TableCell>{proj.status}</TableCell>
-                <TableCell>{proj.deadline}</TableCell>
-              </TableRow>
-            )) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center" style={{ color: '#a7a7a7' }}>
-                  Không có dữ liệu
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Paper>
-    );
-  };
-
   const renderPerformance = () => {
     const perfList = data?.performance || [];
     const summary = data?.summary || {};
     return (
-      <Paper elevation={0} className="report-table-paper">
-        <Typography className="report-title">Phân Tích Hiệu Suất</Typography>
-        <Table size="medium" className="big-table">
+      <Paper elevation={0} sx={{ p: 2, borderRadius: '8px' }}>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+          Phân Tích Hiệu Suất
+        </Typography>
+        <Table size="medium">
           <TableHead>
-            <TableRow>
-              <TableCell>Email</TableCell>
-              <TableCell>Tên</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Tổng CP</TableCell>
-              <TableCell>Hoàn thành</TableCell>
-              <TableCell>Đúng hạn</TableCell>
-              <TableCell>Trễ hạn</TableCell>
-              <TableCell>Tỷ lệ hoàn thành</TableCell>
-              <TableCell>Tỷ lệ đúng hạn</TableCell>
-              <TableCell>Điểm</TableCell>
+            <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tên</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tổng CP</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Hoàn thành</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Đúng hạn</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Trễ hạn</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tỷ lệ hoàn thành</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Tỷ lệ đúng hạn</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Điểm</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -173,7 +181,7 @@ export default function AdminReport({ authToken }) {
             ))}
           </TableBody>
         </Table>
-        <Box mt={2} p={2}>
+        <Box mt={4} sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '8px' }}>
           <Typography variant="subtitle1">Tổng nhân viên: {summary.totalEmployees}</Typography>
           <Typography variant="subtitle1">Tỷ lệ hoàn thành TB: {summary.averageCompletionRate}%</Typography>
           <Typography variant="subtitle1">Tỷ lệ đúng hạn TB: {summary.averageOnTimeRate}%</Typography>
@@ -182,48 +190,44 @@ export default function AdminReport({ authToken }) {
     );
   };
 
-  const renderProgress = () => {
-    const prog = data?.projectProgress || data?.projects || {};
-    return (
-      <Paper elevation={0} className="report-table-paper">
-        <Typography className="report-title">Tiến Độ Dự Án</Typography>
-        <pre>{JSON.stringify(prog, null, 2)}</pre>
-      </Paper>
-    );
-  };
-
   const renderSelected = () => {
-    if (loading) return <CircularProgress />;
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
     if (error) return <Typography color="error">{error}</Typography>;
     switch (selected) {
       case 'overview': return renderOverview();
-      case 'detail': return renderDetail();
       case 'performance': return renderPerformance();
-      case 'progress': return renderProgress();
       default: return null;
     }
   };
 
   return (
-    <Box className="admin-report-container">
-      <Accordion defaultExpanded className="report-accordion">
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" className="black-white-text">Chức năng</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <List disablePadding>
-            {['overview','detail','performance','progress'].map((key, idx) => (
-              <React.Fragment key={key}>
-                <ListItemButton selected={selected === key} onClick={handleSelect(key)} className="black-white-list">
-                  <ListItemText primary={{overview: 'Báo cáo tổng quan', detail: 'Báo cáo chi tiết', performance: 'Phân tích hiệu suất', progress: 'Tiến độ dự án'}[key]} />
-                </ListItemButton>
-                {idx < 3 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        </AccordionDetails>
-      </Accordion>
-      <Box className="report-content">{renderSelected()}</Box>
-    </Box>
+    <ReportContainer>
+      <Sidebar>
+        <Accordion defaultExpanded>
+          <StyledAccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">Chức năng</Typography>
+          </StyledAccordionSummary>
+          <AccordionDetails sx={{ p: 0 }}>
+            <List disablePadding>
+              {['overview', 'performance'].map((key, idx) => (
+                <React.Fragment key={key}>
+                  <StyledListItemButton selected={selected === key} onClick={handleSelect(key)}>
+                    <ListItemText primary={{ overview: 'Báo cáo tổng quan', performance: 'Phân tích hiệu suất' }[key]} />
+                  </StyledListItemButton>
+                  {idx < 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </AccordionDetails>
+        </Accordion>
+      </Sidebar>
+      <ReportContent>{renderSelected()}</ReportContent>
+    </ReportContainer>
   );
 }

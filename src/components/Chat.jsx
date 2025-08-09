@@ -50,8 +50,8 @@ function Chat() {
     >
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
-            Hello World
+          <Typography variant="h5" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
+            Tính năng đang phát tiển
           </Typography>
         </Toolbar>
       </AppBar>

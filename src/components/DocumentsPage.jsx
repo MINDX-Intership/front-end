@@ -439,9 +439,9 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
           toast.error(
             "Lỗi server: Phản hồi không hợp lệ. Vui lòng kiểm tra console."
           );
-          return; // Stop if response is not JSON
+          return;
         }
-        // --- END ADDED CONSOLE LOGS ---
+
       } catch (err) {
         toast.error("Lỗi kết nối khi tải file lên.");
         console.error("Upload file network error:", err);

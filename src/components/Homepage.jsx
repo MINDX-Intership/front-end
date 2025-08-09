@@ -271,9 +271,9 @@ const Homepage = () => {
           ))}
 
           <div style={styles.heroContent}>
-            <h1 style={styles.heroTitle}>Hello World</h1>
+            <h1 style={styles.heroTitle}>TaskFlow</h1>
             <p style={styles.heroSubtitle}>
-              Chào mừng đến với trang web quản lý nhân sự xịn nhất quả đất của chúng tôi
+              Ứng dụng quản lý trực tuyến cho phép cá nhân, nhóm tối ưu hóa công việc một cách hiệu quả.
             </p>
             <button 
               style={styles.heroButton}
@@ -356,22 +356,22 @@ const Homepage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
             {[
               {
-                title: "Dự án mới đầy hứa hẹn",
-                detail: "Chúng tôi vừa khởi động một dự án công nghệ mới với những tính năng đột phá, hứa hẹn mang lại trải nghiệm tuyệt vời cho người dùng. Với sự kết hợp hoàn hảo giữa thiết kế hiện đại và công nghệ tiên tiến.",
+                title: "Quản lý nhân sự & công việc",
+                detail: "Admin có thể quản lý thông tin nhân viên, tài khoản, lịch làm việc, tạo và gán nhiệm vụ, theo dõi tiến độ, và phân tích hiệu suất.",
                 imageSrc: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=400&fit=crop",
                 tag: "Mới",
                 color: "#667eea"
               },
               {
-                title: "Thành tựu đáng tự hào",
-                detail: "Đội ngũ của chúng tôi đã đạt được những cột mốc quan trọng trong năm qua, khẳng định vị thế và năng lực trong lĩnh vực công nghệ. Sự nỗ lực không ngừng đã mang lại kết quả xứng đáng.",
+                title: "Hỗ trợ nhân viên",
+                detail: "Nhân viên có thể quản lý thông tin cá nhân, lịch làm việc, thực hiện và cập nhật nhiệm vụ, và xem thông báo.",
                 imageSrc: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop",
                 tag: "Thành tựu",
                 color: "#f093fb"
               },
               {
-                title: "Tương lai phát triển",
-                detail: "Với tầm nhìn dài hạn và chiến lược rõ ràng, chúng tôi đang hướng tới những mục tiêu lớn hơn, mang lại giá trị bền vững cho cộng đồng và xã hội.",
+                title: "Cơ sở dữ liệu tối ưu",
+                detail: "Hệ thống được xây dựng với các collection như users, accounts, sprints, tasks, taskcomments… giúp lưu trữ và truy xuất dữ liệu nhanh chóng.",
                 imageSrc: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop",
                 tag: "Tương lai",
                 color: "#4facfe"
@@ -381,6 +381,7 @@ const Homepage = () => {
             ))}
           </div>
         </div>
+        
 
         {/* Footer */}
         <div style={styles.footer}>
@@ -423,7 +424,6 @@ const PostCard = ({ imageSrc, title, detail, tag, color, index }) => {
       flexDirection: window.innerWidth > 768 ? (index % 2 === 0 ? 'row' : 'row-reverse') : 'column',
       background: 'white',
       borderRadius: '24px',
-      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
       overflow: 'hidden',
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
