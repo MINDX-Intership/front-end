@@ -31,6 +31,7 @@ import SupportResponsePage from "./components/SupportResponsePage"; // Import Su
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
+import InstructPage from "./components/InstructPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname);
@@ -465,15 +466,7 @@ function App() {
 
     // Redirect authenticated users without a profile to create-profile
     // This condition now correctly relies on currentUser being null, but authToken and currentAccount exist.
-    if (
-      authToken &&
-      currentAccount && // Ensure account is loaded before checking for user profile
-      !currentUser &&
-      path !== "/create-profile" // Ensure we don't redirect from create-profile itself
-    ) {
-      navigate("/create-profile");
-      return null;
-    }
+
 
     // Helper for pages requiring authentication and user/account profiles
     const commonAuthProtectedPageCheck = () => {
@@ -540,6 +533,9 @@ function App() {
             setCurrentPage={navigate}
           />
         );
+        case path === "/huong-dan":
+          return<InstructPage/>
+
       case path === "/create-sprint":
         const createSprintCheck = commonAuthProtectedPageCheck();
         if (createSprintCheck === true) return null;
@@ -698,12 +694,11 @@ function App() {
         );
 
       default:
-        if (authToken && currentUser && currentAccount) {
-          navigate("/homepage");
-        } else {
+        if (!authToken) {
           navigate("/login");
+          return null;
         }
-        return null;
+        return <NotFoundPage setCurrentPage={navigate} homePath="/homepage" />;
     }
   };
 
