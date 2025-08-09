@@ -53,7 +53,7 @@ import "dayjs/locale/vi";
 // Import CSS
 import "./ProjectsPage.css";
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://back-end-hk2p.onrender.com/api";
 
 const ProjectsPage = ({ authToken, currentUserId }) => {
   const [projects, setProjects] = useState([]);

@@ -53,7 +53,7 @@ const CreateSprint = ({ authToken, setCurrentPage }) => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/sprints/add", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/sprints/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

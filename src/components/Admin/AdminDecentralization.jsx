@@ -68,7 +68,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
     }
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/users/all", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/users/all", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
     if (fetchingDepartsRef.current) return; // Prevent duplicate fetches
     fetchingDepartsRef.current = true;
     try {
-      const response = await fetch("http://localhost:3000/api/departs/all", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/departs/all", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
     if (fetchingJobPositionsRef.current) return; // Prevent duplicate fetches
     fetchingJobPositionsRef.current = true;
     try {
-      const response = await fetch("http://localhost:3000/api/job-positions/all", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/job-positions/all", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +190,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
     await fetchAllJobPositions();
 
     try {
-      const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+      const response = await fetch(`https://back-end-hk2p.onrender.com/api/users/${userId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -284,7 +284,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
 
     setLoading(true); // Set main loading for the update operation
     try {
-      const response = await fetch(`http://localhost:3000/api/users/${editingUser._id}`, {
+      const response = await fetch(`https://back-end-hk2p.onrender.com/api/users/${editingUser._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -335,7 +335,7 @@ const AdminDecentralization = ({ authToken, currentUser, currentAccount }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/access-control/delete/${userToDelete._id}`, {
+      const response = await fetch(`https://back-end-hk2p.onrender.com/api/admin/access-control/delete/${userToDelete._id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

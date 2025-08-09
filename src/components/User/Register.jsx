@@ -26,7 +26,7 @@ const Register = ({ setCurrentPage }) => {
 
     try {
       // Step 1: Register the account
-      const registerResponse = await fetch('http://localhost:3000/api/accounts/register', {
+      const registerResponse = await fetch('https://back-end-hk2p.onrender.com/api/accounts/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ const Register = ({ setCurrentPage }) => {
         // Step 2: If registration is successful, send verification email
         if (registerData.account && registerData.account.email) {
           try {
-            const verifyEmailResponse = await fetch('http://localhost:3000/api/accounts/send-verification', {
+            const verifyEmailResponse = await fetch('https://back-end-hk2p.onrender.com/api/accounts/send-verification', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

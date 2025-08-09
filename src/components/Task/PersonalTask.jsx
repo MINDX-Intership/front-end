@@ -38,7 +38,7 @@ import {
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://back-end-hk2p.onrender.com/api";
 const LOADING_DELAY_MS = 1000;
 
 // Styled Components (Adapted from SprintsPage.jsx)

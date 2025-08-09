@@ -57,7 +57,7 @@ export default function AdminReport({ authToken }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const baseURL = 'http://localhost:3000/api/reports';
+  const baseURL = 'https://back-end-hk2p.onrender.com/api/reports';
   const endpoints = {
     overview: `${baseURL}/overview`,
     performance: `${baseURL}/performance`,

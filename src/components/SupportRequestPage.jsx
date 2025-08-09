@@ -144,7 +144,7 @@ const SupportRequestPage = ({ authToken }) => {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/supports/my-requests', {
+      const res = await fetch('https://back-end-hk2p.onrender.com/api/supports/my-requests', {
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
 
@@ -163,7 +163,7 @@ const SupportRequestPage = ({ authToken }) => {
         data.map(async (req) => {
           try {
             const userRes = await fetch(
-              `http://localhost:3000/api/users/${req.user}`,
+              `https://back-end-hk2p.onrender.com/api/users/${req.user}`,
               { headers: { 'Authorization': `Bearer ${authToken}` } }
             );
             if (!userRes.ok) {
@@ -205,7 +205,7 @@ const SupportRequestPage = ({ authToken }) => {
     }
     try {
       // BƯỚC 1: Gửi yêu cầu hỗ trợ
-      const requestResponse = await fetch('http://localhost:3000/api/supports/create', {
+      const requestResponse = await fetch('https://back-end-hk2p.onrender.com/api/supports/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +226,7 @@ const SupportRequestPage = ({ authToken }) => {
         responseMessage: 'Yêu cầu của bạn đã được tiếp nhận và đang chờ xử lý.', // Tin nhắn phản hồi mặc định
       };
 
-      const supportResponse = await fetch('http://localhost:3000/api/supports-response/', {
+      const supportResponse = await fetch('https://back-end-hk2p.onrender.com/api/supports-response/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ const SupportRequestPage = ({ authToken }) => {
     if (!authToken || !requestToDelete) return toast.error('Không có token xác thực hoặc yêu cầu để xóa.');
     try {
       const response = await fetch(
-        `http://localhost:3000/api/supports/delete/${requestToDelete._id}`,
+        `https://back-end-hk2p.onrender.com/api/supports/delete/${requestToDelete._id}`,
         { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } }
       );
       if (!response.ok) throw new Error('Xóa yêu cầu thất bại.');

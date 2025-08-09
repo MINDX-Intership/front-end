@@ -261,7 +261,7 @@ const EditSprintForm = ({ open, handleClose, sprintToEdit, onUpdateSuccess, auth
         setLoading(true);
 
         try {
-            const response = await fetch(`http://localhost:3000/api/sprints/${sprintToEdit._id}`, {
+            const response = await fetch(`https://back-end-hk2p.onrender.com/api/sprints/${sprintToEdit._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -396,7 +396,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/sprints/all', {
+            const response = await fetch('https://back-end-hk2p.onrender.com/api/sprints/all', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -448,7 +448,7 @@ const SprintsPage = ({ authToken, setCurrentPage, currentUser }) => {
         if (!sprintToDelete) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/sprints/${sprintToDelete._id}`, {
+            const response = await fetch(`https://back-end-hk2p.onrender.com/api/sprints/${sprintToDelete._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

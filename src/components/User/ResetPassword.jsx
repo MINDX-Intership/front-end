@@ -40,7 +40,7 @@ const ResetPassword = ({ setCurrentPage }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/accounts/reset-password/${token}`, {
+      const response = await fetch(`https://back-end-hk2p.onrender.com/api/accounts/reset-password/${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

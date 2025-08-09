@@ -79,7 +79,7 @@ const AdminTimeline = ({ authToken }) => {
     setError(null);
     try {
       // Endpoint: GET /api/admin/timeline-tasks
-      const data = await callApi('http://localhost:3000/api/admin/timeline-tasks', 'GET');
+      const data = await callApi('https://back-end-hk2p.onrender.com/api/admin/timeline-tasks', 'GET');
       setTimelineTasks(data.data);
     } catch (err) {
       console.error("Error fetching timeline tasks:", err);
@@ -95,7 +95,7 @@ const AdminTimeline = ({ authToken }) => {
     setError(null);
     try {
       // Endpoint: GET /api/timeline/analyze
-      const data = await callApi('http://localhost:3000/api/timeline/analyze', 'GET');
+      const data = await callApi('https://back-end-hk2p.onrender.com/api/timeline/analyze', 'GET');
       setAnalysisData(data.data);
     } catch (err) {
       console.error("Error fetching analysis data:", err);
@@ -109,7 +109,7 @@ const AdminTimeline = ({ authToken }) => {
   const updateTimelineTask = async (taskId, updatedData) => {
     try {
       // Endpoint: PUT /api/admin/timeline-tasks/update/:id
-      await callApi(`http://localhost:3000/api/admin/timeline-tasks/update/${taskId}`, 'PUT', updatedData);
+      await callApi(`https://back-end-hk2p.onrender.com/api/admin/timeline-tasks/update/${taskId}`, 'PUT', updatedData);
       alert('Cập nhật task thành công!');
       fetchTimelineTasks(); // Refresh danh sách sau khi cập nhật
     } catch (err) {
@@ -122,7 +122,7 @@ const AdminTimeline = ({ authToken }) => {
     try {
       if (window.confirm('Bạn có chắc chắn muốn xóa task này?')) {
         // Endpoint: DELETE /api/admin/timeline-tasks/delete/:id
-        await callApi(`http://localhost:3000/api/admin/timeline-tasks/delete/${taskId}`, 'DELETE');
+        await callApi(`https://back-end-hk2p.onrender.com/api/admin/timeline-tasks/delete/${taskId}`, 'DELETE');
         alert('Xóa task thành công!');
         fetchTimelineTasks(); // Refresh danh sách sau khi xóa
       }

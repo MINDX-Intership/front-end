@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://back-end-hk2p.onrender.com/api';
 
 const PRIORITY_OPTIONS = [
   { value: 'LOW', label: 'Thấp', color: '#4caf50' },

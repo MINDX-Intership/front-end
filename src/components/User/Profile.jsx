@@ -320,7 +320,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
 
     try {
       // Placeholder for your actual API endpoint for updating user profile
-      const response = await fetch("http://localhost:3000/api/users/me", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -392,7 +392,7 @@ function SettingPage({ setCurrentPage, currentUser, authToken, onProfileUpdate }
       // Placeholder for your actual avatar upload API endpoint
       // This is where you would send the formData to your backend
       // Example with a dummy progress update
-      const uploadApiUrl = "http://localhost:3000/api/upload-avatar"; // Replace with your actual endpoint
+      const uploadApiUrl = "https://back-end-hk2p.onrender.com/api/upload-avatar"; // Replace with your actual endpoint
 
       // Simulate progress for demonstration
       for (let i = 0; i <= 100; i += 10) {

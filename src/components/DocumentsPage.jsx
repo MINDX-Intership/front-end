@@ -251,7 +251,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/api/documents", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/documents", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -319,7 +319,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/documents/${documentToDelete._id}`,
+        `https://back-end-hk2p.onrender.com/api/documents/${documentToDelete._id}`,
         {
           method: "DELETE",
           headers: {
@@ -404,7 +404,7 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
 
       try {
         const uploadResponse = await fetch(
-          "http://localhost:3000/api/documents/upload",
+          "https://back-end-hk2p.onrender.com/api/documents/upload",
           {
             method: "POST",
             headers: {
@@ -457,8 +457,8 @@ const DocumentsPage = ({ authToken, setCurrentPage, currentUser }) => {
     };
 
     const url = currentDocument._id
-      ? `http://localhost:3000/api/documents/${currentDocument._id}`
-      : "http://localhost:3000/api/documents";
+      ? `https://back-end-hk2p.onrender.com/api/documents/${currentDocument._id}`
+      : "https://back-end-hk2p.onrender.com/api/documents";
     const method = currentDocument._id ? "PUT" : "POST";
 
     try {

@@ -70,7 +70,7 @@ function App() {
 
     fetchingUserRef.current = true;
     try {
-      const response = await fetch("http://localhost:3000/api/users/me", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/users/me", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +141,7 @@ function App() {
 
     fetchingAccountRef.current = true;
     try {
-      const response = await fetch("http://localhost:3000/api/accounts/me", {
+      const response = await fetch("https://back-end-hk2p.onrender.com/api/accounts/me", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

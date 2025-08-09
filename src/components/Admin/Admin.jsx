@@ -148,7 +148,7 @@ const Admin = ({ authToken }) => {
     if (!authToken) return;
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/users/all", {
+      const res = await fetch("https://back-end-hk2p.onrender.com/api/users/all", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -194,7 +194,7 @@ const Admin = ({ authToken }) => {
   const grantUserAccess = async () => {
     try {
       const res = await fetch(
-        "http://localhost:3000/api/admin/access-control/grant",
+        "https://back-end-hk2p.onrender.com/api/admin/access-control/grant",
         {
           method: "POST",
           headers: {
@@ -220,7 +220,7 @@ const Admin = ({ authToken }) => {
   const updateUserAccess = async () => {
     try {
       const res = await fetch(
-        "http://localhost:3000/api/admin/access-control/update",
+        "https://back-end-hk2p.onrender.com/api/admin/access-control/update",
         {
           method: "PUT",
           headers: {
@@ -250,7 +250,7 @@ const Admin = ({ authToken }) => {
     });
     try {
       const res = await fetch(
-        `http://localhost:3000/api/admin/access-control/delete/${selectedUserId}`,
+        `https://back-end-hk2p.onrender.com/api/admin/access-control/delete/${selectedUserId}`,
         {
           method: "DELETE",
           headers: {
@@ -272,7 +272,7 @@ const Admin = ({ authToken }) => {
 
   const addDepartment = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/departs/create", {
+      const res = await fetch("https://back-end-hk2p.onrender.com/api/departs/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -310,7 +310,7 @@ const Admin = ({ authToken }) => {
     }
 
     try {
-      const registerResponse = await fetch('http://localhost:3000/api/accounts/register', {
+      const registerResponse = await fetch('https://back-end-hk2p.onrender.com/api/accounts/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -333,7 +333,7 @@ const Admin = ({ authToken }) => {
         // Step 2: If registration is successful, send verification email
         if (registerData.account && registerData.account.email) {
           try {
-            const verifyEmailResponse = await fetch('http://localhost:3000/api/accounts/send-verification', {
+            const verifyEmailResponse = await fetch('https://back-end-hk2p.onrender.com/api/accounts/send-verification', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

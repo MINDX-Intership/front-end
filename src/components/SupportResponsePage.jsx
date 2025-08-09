@@ -125,7 +125,7 @@ const SupportResponsePage = ({ authToken, currentUserId }) => {
   const fetchResponses = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/supports-response", {
+      const res = await fetch("https://back-end-hk2p.onrender.com/api/supports-response", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) throw new Error("Không thể tải dữ liệu yêu cầu hỗ trợ.");
@@ -136,7 +136,7 @@ const SupportResponsePage = ({ authToken, currentUserId }) => {
         data.map(async (resp) => {
           try {
             const userRes = await fetch(
-              `http://localhost:3000/api/users/${resp.createdBy}`,
+              `https://back-end-hk2p.onrender.com/api/users/${resp.createdBy}`,
               { headers: { Authorization: `Bearer ${authToken}` } }
             );
             if (!userRes.ok)
@@ -171,7 +171,7 @@ const SupportResponsePage = ({ authToken, currentUserId }) => {
       };
       
       const res = await fetch(
-        `http://localhost:3000/api/supports-response/${responseToHandle._id}`,
+        `https://back-end-hk2p.onrender.com/api/supports-response/${responseToHandle._id}`,
         {
           method: "PATCH",
           headers: {
