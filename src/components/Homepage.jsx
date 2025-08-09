@@ -288,7 +288,7 @@ const Homepage = () => {
                 e.target.style.boxShadow = 'none';
               }}
             >
-              Khám phá ngay
+              Tìm hiểu ngay
             </button>
           </div>
 

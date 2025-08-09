@@ -65,16 +65,7 @@ const Login = ({ setCurrentPage, onLoginSuccess }) => {
             Đăng Nhập
           </Button>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 1 }}>
-            <Link
-              href="/register"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentPage('/register');
-              }}
-              sx={{ color: '#4a90e2', textDecoration: 'none' }}
-            >
-              {"Chưa có tài khoản? Đăng ký"}
-            </Link>
+
             <Link
               href="/reset-password"
               onClick={(e) => {
