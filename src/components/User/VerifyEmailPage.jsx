@@ -19,6 +19,7 @@ const VerifyEmailPage = ({ token, setCurrentPage, onVerificationSuccess }) => {
         console.log('VerifyEmailPage: Using token in verification URL.',token);
         const verificationResponse = await fetch(`https://back-end-hk2p.onrender.com/api/accounts/verify-email/${token}`, {
           method: 'GET',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
