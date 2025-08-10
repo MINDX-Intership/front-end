@@ -372,9 +372,9 @@ function App() {
         case path === "/forgot-password":
           return <ForgotPassword setCurrentPage={navigate} />;
         case path.startsWith("/reset-password/"):
-          const resetToken = path.split("/reset-password/:token")[1];
+          const resetToken = path.split("/reset-password/")[1];
           return <ResetPassword setCurrentPage={navigate} token={resetToken} />;
-        case path.startsWith("/verify-email/:token"):
+        case path.startsWith("/verify-email/"):
           const emailVerificationToken = path.split("/verify-email/")[1];
           if (!emailVerificationToken) {
             return (
